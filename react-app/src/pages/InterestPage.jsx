@@ -31,7 +31,7 @@ export default function InterestPage() {
 
           <div className="field">
             <label htmlFor="first_name">First Name</label>
-            <input id="first_name" name="first_name" maxLength="40" type="text" autoComplete="given-name" />
+            <input id="first_name" name="first_name" maxLength="40" type="text" required autoComplete="given-name" />
           </div>
 
           <div className="field">
@@ -102,7 +102,7 @@ export default function InterestPage() {
         </div>
 
         <button type="submit" className="btn-primary w2l-submit">Submit Request</button>
-        <p className="form-note">After submit, Salesforce redirects to the thank-you page.</p>
+        <p className="form-note">Required: First Name, Last Name, Company, and Email. After submit, Salesforce redirects to the thank-you page.</p>
       </form>
     </div>
   )
