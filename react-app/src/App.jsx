@@ -1,25 +1,22 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { Routes, Route } from 'react-router-dom'
+import Navbar from './components/Navbar.jsx'
+import InterestPage from './pages/InterestPage.jsx'
+import ThanksPage from './pages/ThanksPage.jsx'
 import './App.css'
 
-export default function App(props) {
+export default function App() {
   return (
-    <>
-      <nav>
-        <a>Interest in products</a>
-        <a>Thanks page for filling form</a>
-        <a>Future menuitem</a>
-      </nav>
-      <section>
-        <article>
-          <form>
-            TODO
-            {/* If Interest in products is checked, then here comes the Web-to-Lead form generated from Salesforce and styled. */}
-          </form>
-        </article>
-        {/* Web-to-Lead redirects to Thanks page */}
-      </section>
-    </>
+    <div className="app-layout">
+      <Navbar />
+      <main className="main-content">
+        <Routes>
+          <Route path="/" element={<InterestPage />} />
+          <Route path="/thanks" element={<ThanksPage />} />
+        </Routes>
+      </main>
+      <footer className="footer">
+        <p>&copy; {new Date().getFullYear()} React 4 fun</p>
+      </footer>
+    </div>
   )
 }
