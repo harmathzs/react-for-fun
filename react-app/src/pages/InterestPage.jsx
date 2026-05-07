@@ -9,6 +9,7 @@ export default function InterestPage() {
         method="POST"
       >
         <input type="hidden" name="oid" value="00DdM00000vOexx" />
+        <input type="hidden" name="lead_source" value="Web" />
         <input
           type="hidden"
           name="retURL"
@@ -96,13 +97,18 @@ export default function InterestPage() {
           </div>
 
           <div className="field field-full">
+            <label htmlFor="product_interest">Product Interest</label>
+            <textarea id="product_interest" name="product_interest" rows="4" />
+          </div>
+
+          <div className="field field-full">
             <label htmlFor="description">Description</label>
             <textarea id="description" name="description" rows="4" />
           </div>
         </div>
 
         <button type="submit" className="btn-primary w2l-submit">Submit Request</button>
-        <p className="form-note">Required: First Name, Last Name, Company, and Email. After submit, Salesforce redirects to the thank-you page.</p>
+        <p className="form-note">Required: First Name, Last Name, Company, and Email. <br />After submit, Salesforce redirects to the thank-you page.</p>
       </form>
     </div>
   )
