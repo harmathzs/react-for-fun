@@ -1,6 +1,6 @@
 export default function InterestPage() {
   return (
-    <div className="page-card">
+    <div className="page-card form-card">
       <h1>Interest in Products</h1>
       <p>Fill in the form below to express your interest and we&apos;ll be in touch.</p>
       <form
@@ -17,27 +17,29 @@ export default function InterestPage() {
         />
 
         <div className="form-grid">
-          <div className="field">
-            <label htmlFor="salutation">Salutation</label>
-            <select id="salutation" name="salutation" defaultValue="">
-              <option value="">Select</option>
-              <option value="Mr.">Mr.</option>
-              <option value="Ms.">Ms.</option>
-              <option value="Mrs.">Mrs.</option>
-              <option value="Dr.">Dr.</option>
-              <option value="Prof.">Prof.</option>
-              <option value="Mx.">Mx.</option>
-            </select>
-          </div>
+          <div className="name-row field-full">
+            <div className="field salutation-field">
+              <label htmlFor="salutation">Salutation</label>
+              <select id="salutation" name="salutation" defaultValue="">
+                <option value="">Select</option>
+                <option value="Mr.">Mr.</option>
+                <option value="Ms.">Ms.</option>
+                <option value="Mrs.">Mrs.</option>
+                <option value="Dr.">Dr.</option>
+                <option value="Prof.">Prof.</option>
+                <option value="Mx.">Mx.</option>
+              </select>
+            </div>
 
-          <div className="field">
-            <label htmlFor="first_name">First Name</label>
-            <input id="first_name" name="first_name" maxLength="40" type="text" required autoComplete="given-name" />
-          </div>
+            <div className="field">
+              <label htmlFor="first_name">First Name</label>
+              <input id="first_name" name="first_name" maxLength="40" type="text" required autoComplete="given-name" />
+            </div>
 
-          <div className="field">
-            <label htmlFor="last_name">Last Name</label>
-            <input id="last_name" name="last_name" maxLength="80" type="text" required autoComplete="family-name" />
+            <div className="field">
+              <label htmlFor="last_name">Last Name</label>
+              <input id="last_name" name="last_name" maxLength="80" type="text" required autoComplete="family-name" />
+            </div>
           </div>
 
           <div className="field">

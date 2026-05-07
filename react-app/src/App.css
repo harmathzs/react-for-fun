@@ -88,6 +88,10 @@
   margin: 0 auto;
 }
 
+.form-card {
+  max-width: 860px;
+}
+
 .page-card h1 {
   font-size: 1.75rem;
   margin-bottom: 0.5rem;
@@ -110,6 +114,12 @@
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.1rem;
+}
+
+.name-row {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr 1.2fr;
   gap: 1rem 1.1rem;
 }
 
@@ -230,6 +240,10 @@
   }
 
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .name-row {
     grid-template-columns: 1fr;
   }
 
