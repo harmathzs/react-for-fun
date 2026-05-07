@@ -97,12 +97,8 @@ export default function InterestPage() {
           </div>
 
           <div className="field field-full">
-            <label htmlFor="product_interest">Product Interest</label>
-            <textarea id="product_interest" name="product_interest" rows="4" />
-          </div>
-
-          <div className="field field-full">
-            <label htmlFor="description">Description</label>
+            <label htmlFor="description">Product Interest</label>
+            {/* Label is intentionally renamed! Flow copies Description to Product Interest. */}
             <textarea id="description" name="description" rows="4" />
           </div>
         </div>
