@@ -7,9 +7,9 @@
 
 /* ── Navbar ─────────────────────────────────── */
 .navbar {
-  background-color: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+  background: linear-gradient(120deg, #ffffff 0%, #f8fbff 55%, #f1f5ff 100%);
+  border-bottom: 1px solid #dbe3f5;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -21,16 +21,40 @@
   padding: 0 1.5rem;
   display: flex;
   align-items: center;
-  gap: 2rem;
-  height: 64px;
+  gap: 1rem;
+  height: 72px;
+}
+
+.navbar-home {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.navbar-home:hover {
+  transform: translateY(-1px);
+  background: #dbeafe;
+}
+
+.navbar-home svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
 }
 
 .navbar-brand {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #0f172a;
   text-decoration: none;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
 
@@ -40,32 +64,137 @@
 
 .navbar-links {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.35rem;
   list-style: none;
   margin: 0;
   padding: 0;
   flex: 1;
+  justify-content: center;
 }
 
 .navbar-links a {
   display: inline-block;
-  padding: 0.4rem 0.9rem;
-  border-radius: 8px;
-  color: #475569;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  color: #334155;
   font-size: 0.9rem;
-  font-weight: 500;
-  transition: background 0.15s, color 0.15s;
+  font-weight: 600;
+  transition: background-color 0.15s, color 0.15s, transform 0.15s;
   text-decoration: none;
 }
 
 .navbar-links a:hover {
-  background-color: #f1f5f9;
+  background-color: #e7eefc;
   color: #1e293b;
+  transform: translateY(-1px);
 }
 
 .navbar-links a.active {
-  background-color: #eff6ff;
+  background-color: #dbeafe;
   color: #2563eb;
+}
+
+.navbar-profile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.username-pill {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 1px solid #d7dfef;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+}
+
+.profile-trigger {
+  border: 1px solid #d7dfef;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #334155;
+  padding: 0.22rem 0.38rem 0.22rem 0.22rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.profile-trigger:hover {
+  border-color: #bed0f8;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.12);
+}
+
+.avatar-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(145deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1d4ed8;
+}
+
+.avatar-circle svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+}
+
+.trigger-chevron {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  min-width: 150px;
+  padding: 0.35rem;
+  border-radius: 12px;
+  border: 1px solid #d8e2f8;
+  background: #ffffff;
+  box-shadow: 0 14px 26px rgba(15, 23, 42, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.profile-menu-item {
+  border: none;
+  background: transparent;
+  color: #334155;
+  padding: 0.5rem 0.6rem;
+  border-radius: 9px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.profile-menu-item:hover {
+  background: #eef4ff;
+  color: #1d4ed8;
+}
+
+.profile-menu-item:focus-visible,
+.profile-trigger:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.profile-dropdown svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
 }
 
 /* ── Main content ───────────────────────────── */
@@ -186,6 +315,29 @@
   text-align: center;
 }
 
+.shop-card {
+  max-width: 720px;
+  text-align: center;
+  background: linear-gradient(175deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.shop-label {
+  margin: 0 auto 0.8rem;
+  width: fit-content;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1d4ed8;
+  background: #e0e7ff;
+}
+
+.shop-actions {
+  margin-top: 1.2rem;
+}
+
 .thanks-icon {
   width: 64px;
   height: 64px;
@@ -235,6 +387,39 @@
 }
 
 @media (max-width: 768px) {
+  .navbar-inner {
+    flex-wrap: wrap;
+    height: auto;
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+    row-gap: 0.7rem;
+  }
+
+  .navbar-brand {
+    order: 1;
+  }
+
+  .navbar-home {
+    order: 0;
+  }
+
+  .navbar-profile {
+    margin-left: auto;
+    order: 2;
+  }
+
+  .username-pill {
+    display: none;
+  }
+
+  .navbar-links {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+  }
+
   .page-card {
     padding: 1.5rem;
   }
