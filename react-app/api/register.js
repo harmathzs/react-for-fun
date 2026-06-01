@@ -11,22 +11,14 @@ import {
     responseOk,
     setCookieObject
 } from './_lib/auth-utils.js'
-import { callSalesforceApi, ensureSalesforceSession } from './_lib/salesforce.js'
+import {
+    createSalesforceRecord,
+    ensureSalesforceSession,
+    escapeSoql,
+    querySalesforce
+} from './_lib/salesforce.js'
 
 const PENDING_REGISTRATION_TTL_SECONDS = 60 * 30
-
-async function tryCreateSalesforceRegistration(req, res, payload) {
-    // This is a best-effort Salesforce write so register can still work without full CRM setup.
-    try {
-        const sf = await ensureSalesforceSession(req, res)
-        await callSalesforceApi(sf, '/services/data/v61.0/sobjects/Webshop_Registration__c', {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        })
-    } catch {
-        // Ignore CRM write issues for now; user registration remains cookie-only until backend is completed.
-    }
-}
 
 export default async function handler(req, res) {
     if (!onlyMethods(req, res, ['POST'])) return
@@ -48,9 +40,27 @@ export default async function handler(req, res) {
         return responseError(res, 400, 'Password must be at least 8 characters long')
     }
 
-    // Prevent duplicate registration for the same user in this cookie-only phase.
-    const existing = getCookieObject(req, COOKIE_KEYS.VERIFIED_USER)
-    if (existing?.email === email) {
+    // Keep local cookie duplicate checks for this browser session.
+    const existingCookieUser = getCookieObject(req, COOKIE_KEYS.VERIFIED_USER)
+    if (existingCookieUser?.email === email) {
+        return responseError(res, 409, 'User already exists, please login')
+    }
+
+    // Create Salesforce session first because register now writes real Webshop_User records.
+    let sf
+    try {
+        sf = await ensureSalesforceSession(req, res)
+    } catch (error) {
+        return responseError(res, 502, error.message)
+    }
+
+    // Search existing webshop users by email to avoid duplicate registrations.
+    const existingUsers = await querySalesforce(
+        sf,
+        `SELECT Id, Email__c FROM Webshop_User__c WHERE Email__c = '${escapeSoql(email)}' LIMIT 1`
+    )
+
+    if (existingUsers.length > 0) {
         return responseError(res, 409, 'User already exists, please login')
     }
 
@@ -61,28 +71,37 @@ export default async function handler(req, res) {
         firstName,
         lastName,
         company,
+        username: String(body.username || email).trim().toLowerCase(),
         passwordHash: hashPassword(password),
         verificationCode,
         expiresAt: Math.floor(Date.now() / 1000) + PENDING_REGISTRATION_TTL_SECONDS
     }
 
     clearCookieObject(res, COOKIE_KEYS.SITE_SESSION)
-    setCookieObject(res, COOKIE_KEYS.PENDING_REGISTRATION, pendingRegistration, PENDING_REGISTRATION_TTL_SECONDS)
 
-    // Optionally create a placeholder custom object record in Salesforce for visibility.
-    await tryCreateSalesforceRegistration(req, res, {
+    // Create the Webshop_User record in Salesforce with pending verification status.
+    const created = await createSalesforceRecord(sf, 'Webshop_User__c', {
         Email__c: email,
         First_Name__c: firstName,
         Last_Name__c: lastName,
         Company__c: company,
-        Verification_Status__c: 'Unverified'
+        Username__c: pendingRegistration.username,
+        Password_Hash__c: pendingRegistration.passwordHash,
+        Status__c: 'Pending_Verification',
+        Email_Verified__c: false,
+        Failed_Login_Count__c: 0,
+        Salesforce_User__c: globalThis?.process?.env?.SALESFORCE_INTEGRATION_USER_ID || null
     })
+
+    pendingRegistration.webshopUserId = created.id
+    setCookieObject(res, COOKIE_KEYS.PENDING_REGISTRATION, pendingRegistration, PENDING_REGISTRATION_TTL_SECONDS)
 
     // Return verification code only for local/dev testing until email sender is added.
     const includeCode = globalThis?.process?.env?.NODE_ENV !== 'production'
 
     return responseOk(res, {
         message: 'Registration started. Please verify your email before login.',
+        webshopUserId: created.id,
         ...(includeCode ? { verificationCode } : {})
     })
 }

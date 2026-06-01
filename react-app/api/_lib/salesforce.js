@@ -3,8 +3,12 @@ import { COOKIE_KEYS, getCookieObject, setCookieObject } from './auth-utils.js'
 const TOKEN_REFRESH_BUFFER_SECONDS = 120
 const SALESFORCE_COOKIE_TTL_SECONDS = 60 * 60
 
+function readEnv(name) {
+  return globalThis?.process?.env?.[name]
+}
+
 function getRequiredEnv(name) {
-  const value = process.env[name]
+  const value = readEnv(name)
   if (!value) {
     throw new Error(`Missing environment variable: ${name}`)
   }
@@ -26,7 +30,7 @@ function isTokenActive(session) {
 
 export async function fetchSalesforceToken() {
   // This flow uses client credentials and runs only on the server side.
-  const loginUrl = process.env.SALESFORCE_LOGIN_URL || 'https://login.salesforce.com'
+  const loginUrl = readEnv('SALESFORCE_LOGIN_URL') || 'https://login.salesforce.com'
   const consumerKey = getRequiredEnv('SALESFORCE_CONSUMER_KEY')
   const consumerSecret = getRequiredEnv('SALESFORCE_CONSUMER_SECRET')
 
@@ -93,4 +97,35 @@ export async function callSalesforceApi(session, path, options = {}) {
   }
 
   return data
+}
+
+export function getSalesforceApiVersion() {
+  return readEnv('SALESFORCE_API_VERSION') || 'v61.0'
+}
+
+export function escapeSoql(value) {
+  return String(value || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+}
+
+export async function querySalesforce(session, soql) {
+  const encoded = encodeURIComponent(soql)
+  const version = getSalesforceApiVersion()
+  const data = await callSalesforceApi(session, `/services/data/${version}/query?q=${encoded}`)
+  return data.records || []
+}
+
+export async function createSalesforceRecord(session, objectApiName, payload) {
+  const version = getSalesforceApiVersion()
+  return callSalesforceApi(session, `/services/data/${version}/sobjects/${objectApiName}`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
+export async function updateSalesforceRecord(session, objectApiName, recordId, payload) {
+  const version = getSalesforceApiVersion()
+  return callSalesforceApi(session, `/services/data/${version}/sobjects/${objectApiName}/${recordId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload)
+  })
 }

@@ -178,6 +178,8 @@
   font-weight: 600;
   text-align: left;
   cursor: pointer;
+  text-decoration: none;
+  display: block;
 }
 
 .profile-menu-item:hover {
@@ -336,6 +338,67 @@
 
 .shop-actions {
   margin-top: 1.2rem;
+}
+
+.auth-card {
+  max-width: 760px;
+}
+
+.auth-card-sm {
+  max-width: 520px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-grid {
+  margin-bottom: 0.3rem;
+}
+
+.verify-form {
+  margin-top: 1.25rem;
+  border-top: 1px dashed #cddaf7;
+  padding-top: 1.15rem;
+}
+
+.verify-form h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.verify-form p {
+  margin: 0;
+  color: #64748b;
+}
+
+.verify-preview {
+  margin: 0;
+  color: #1d4ed8;
+  background: #e6efff;
+  border: 1px solid #c7dbff;
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+}
+
+.auth-success,
+.auth-error,
+.auth-switch {
+  margin-bottom: 0;
+}
+
+.auth-success {
+  color: #166534;
+}
+
+.auth-error {
+  color: #dc2626;
+}
+
+.auth-switch {
+  color: #64748b;
 }
 
 .thanks-icon {

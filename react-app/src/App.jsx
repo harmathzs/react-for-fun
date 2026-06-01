@@ -3,6 +3,8 @@ import Navbar from './components/Navbar.jsx'
 import InterestPage from './pages/InterestPage.jsx'
 import ThanksPage from './pages/ThanksPage.jsx'
 import ShopPage from './pages/ShopPage.jsx'
+import RegisterPage from './pages/RegisterPage.jsx'
+import LoginPage from './pages/LoginPage.jsx'
 import './App.css'
 
 export default function App() {
@@ -13,6 +15,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<InterestPage />} />
           <Route path="/shop" element={<ShopPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/thanks" element={<ThanksPage />} />
         </Routes>
       </main>

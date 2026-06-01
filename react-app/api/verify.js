@@ -9,11 +9,17 @@ import {
     responseOk,
     setCookieObject
 } from './_lib/auth-utils.js'
+import {
+    ensureSalesforceSession,
+    escapeSoql,
+    querySalesforce,
+    updateSalesforceRecord
+} from './_lib/salesforce.js'
 
 const VERIFIED_USER_TTL_SECONDS = 60 * 60 * 24 * 30
 const SITE_SESSION_TTL_SECONDS = 60 * 60 * 8
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
     if (!onlyMethods(req, res, ['POST'])) return
 
     // Read submitted verification details.
@@ -40,12 +46,41 @@ export default function handler(req, res) {
         return responseError(res, 401, 'Invalid verification code')
     }
 
+    // Load and activate the matching Salesforce Webshop_User record.
+    let sf
+    try {
+        sf = await ensureSalesforceSession(req, res)
+    } catch (error) {
+        return responseError(res, 502, error.message)
+    }
+
+    let userId = pending.webshopUserId
+    if (!userId) {
+        const matchedUsers = await querySalesforce(
+            sf,
+            `SELECT Id FROM Webshop_User__c WHERE Email__c = '${escapeSoql(pending.email)}' ORDER BY CreatedDate DESC LIMIT 1`
+        )
+        userId = matchedUsers[0]?.Id
+    }
+
+    if (!userId) {
+        return responseError(res, 404, 'No Webshop user record found for verification')
+    }
+
+    await updateSalesforceRecord(sf, 'Webshop_User__c', userId, {
+        Status__c: 'Active',
+        Email_Verified__c: true,
+        Email_Verified_At__c: new Date().toISOString()
+    })
+
     // Promote pending registration into verified profile cookie.
     const verifiedUser = {
+        id: userId,
         email: pending.email,
         firstName: pending.firstName,
         lastName: pending.lastName,
         company: pending.company,
+        username: pending.username,
         passwordHash: pending.passwordHash,
         verifiedAt: now
     }

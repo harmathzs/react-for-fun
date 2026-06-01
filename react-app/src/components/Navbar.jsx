@@ -64,8 +64,8 @@ export default function Navbar() {
 
           {isProfileOpen && (
             <div className="profile-dropdown" role="menu" aria-label="Profile menu">
-              <button type="button" className="profile-menu-item" role="menuitem">Login</button>
-              <button type="button" className="profile-menu-item" role="menuitem">Register</button>
+              <NavLink to="/login" className="profile-menu-item" role="menuitem" onClick={() => setIsProfileOpen(false)}>Login</NavLink>
+              <NavLink to="/register" className="profile-menu-item" role="menuitem" onClick={() => setIsProfileOpen(false)}>Register</NavLink>
             </div>
           )}
         </div>
