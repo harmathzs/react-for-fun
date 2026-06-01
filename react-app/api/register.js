@@ -23,6 +23,8 @@ const PENDING_REGISTRATION_TTL_SECONDS = 60 * 30
 export default async function handler(req, res) {
     if (!onlyMethods(req, res, ['POST'])) return
 
+    const traceId = `reg_${Date.now()}_${Math.floor(Math.random() * 100000)}`
+
     // Parse the registration request body from Vercel runtime.
     const body = readJsonBody(req)
     const email = String(body.email || '').trim().toLowerCase()
@@ -46,19 +48,45 @@ export default async function handler(req, res) {
         return responseError(res, 409, 'User already exists, please login')
     }
 
+    // Log lightweight registration context to match Vercel log lines with frontend failures.
+    console.warn('[register] start', {
+        traceId,
+        emailDomain: email.includes('@') ? email.split('@')[1] : null,
+        hasUsername: !!body.username
+    })
+
     // Create Salesforce session first because register now writes real Webshop_User records.
     let sf
     try {
         sf = await ensureSalesforceSession(req, res)
     } catch (error) {
-        return responseError(res, 502, error.message)
+        console.warn('[register] salesforce session failed', {
+            traceId,
+            message: error.message
+        })
+        return responseError(res, 502, 'Salesforce authentication failed', {
+            traceId,
+            reason: error.message
+        })
     }
 
     // Search existing webshop users by email to avoid duplicate registrations.
-    const existingUsers = await querySalesforce(
-        sf,
-        `SELECT Id, Email__c FROM Webshop_User__c WHERE Email__c = '${escapeSoql(email)}' LIMIT 1`
-    )
+    let existingUsers = []
+    try {
+        existingUsers = await querySalesforce(
+            sf,
+            `SELECT Id, Email__c FROM Webshop_User__c WHERE Email__c = '${escapeSoql(email)}' LIMIT 1`
+        )
+    } catch (error) {
+        console.warn('[register] user lookup failed', {
+            traceId,
+            message: error.message
+        })
+        return responseError(res, 502, 'Salesforce user lookup failed', {
+            traceId,
+            reason: error.message
+        })
+    }
 
     if (existingUsers.length > 0) {
         return responseError(res, 409, 'User already exists, please login')
@@ -80,17 +108,34 @@ export default async function handler(req, res) {
     clearCookieObject(res, COOKIE_KEYS.SITE_SESSION)
 
     // Create the Webshop_User record in Salesforce with pending verification status.
-    const created = await createSalesforceRecord(sf, 'Webshop_User__c', {
-        Email__c: email,
-        First_Name__c: firstName,
-        Last_Name__c: lastName,
-        Company__c: company,
-        Username__c: pendingRegistration.username,
-        Password_Hash__c: pendingRegistration.passwordHash,
-        Status__c: 'Pending_Verification',
-        Email_Verified__c: false,
-        Failed_Login_Count__c: 0,
-        Salesforce_User__c: globalThis?.process?.env?.SALESFORCE_INTEGRATION_USER_ID || null
+    let created
+    try {
+        created = await createSalesforceRecord(sf, 'Webshop_User__c', {
+            Email__c: email,
+            First_Name__c: firstName,
+            Last_Name__c: lastName,
+            Company__c: company,
+            Username__c: pendingRegistration.username,
+            Password_Hash__c: pendingRegistration.passwordHash,
+            Status__c: 'Pending_Verification',
+            Email_Verified__c: false,
+            Failed_Login_Count__c: 0,
+            Salesforce_User__c: globalThis?.process?.env?.SALESFORCE_INTEGRATION_USER_ID || null
+        })
+    } catch (error) {
+        console.warn('[register] user create failed', {
+            traceId,
+            message: error.message
+        })
+        return responseError(res, 502, 'Salesforce user creation failed', {
+            traceId,
+            reason: error.message
+        })
+    }
+
+    console.warn('[register] success', {
+        traceId,
+        webshopUserId: created.id
     })
 
     pendingRegistration.webshopUserId = created.id

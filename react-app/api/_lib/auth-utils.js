@@ -68,6 +68,10 @@ export function responseOk(res, data = {}) {
   res.status(200).json({ ok: true, ...data })
 }
 
-export function responseError(res, code, message) {
-  res.status(code).json({ ok: false, error: message })
+export function responseError(res, code, message, details = null) {
+  res.status(code).json({
+    ok: false,
+    error: message,
+    ...(details ? { details } : {})
+  })
 }

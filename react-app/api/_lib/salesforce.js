@@ -10,6 +10,7 @@ function readEnv(name) {
 function getRequiredEnv(name) {
   const value = readEnv(name)
   if (!value) {
+    console.warn('[salesforce] missing environment variable', { name })
     throw new Error(`Missing environment variable: ${name}`)
   }
   return value
@@ -51,7 +52,13 @@ export async function fetchSalesforceToken() {
   const payload = await response.json()
 
   if (!response.ok) {
-    throw new Error(payload.error_description || payload.error || 'Salesforce authentication failed')
+    console.warn('[salesforce] token exchange failed', {
+      status: response.status,
+      loginUrl,
+      error: payload.error || null,
+      description: payload.error_description || null
+    })
+    throw new Error(payload.error_description || payload.error || `Salesforce authentication failed (${response.status})`)
   }
 
   const expiresIn = Number(payload.expires_in || 3600)
@@ -93,7 +100,14 @@ export async function callSalesforceApi(session, path, options = {}) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok) {
-    throw new Error(data[0]?.message || data.message || 'Salesforce API call failed')
+    console.warn('[salesforce] api request failed', {
+      status: response.status,
+      path,
+      method: options.method || 'GET',
+      message: data[0]?.message || data.message || null,
+      errorCode: data[0]?.errorCode || null
+    })
+    throw new Error(data[0]?.message || data.message || `Salesforce API call failed (${response.status})`)
   }
 
   return data
