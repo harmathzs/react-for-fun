@@ -92,6 +92,35 @@ export default async function handler(req, res) {
         return responseError(res, 409, 'User already exists, please login')
     }
 
+    // Resolve a Contact for this registration. Reuse by email when present, otherwise create one.
+    let contactId
+    try {
+        const existingContacts = await querySalesforce(
+            sf,
+            `SELECT Id FROM Contact WHERE Email = '${escapeSoql(email)}' ORDER BY CreatedDate DESC LIMIT 1`
+        )
+
+        if (existingContacts.length > 0) {
+            contactId = existingContacts[0].Id
+        } else {
+            const createdContact = await createSalesforceRecord(sf, 'Contact', {
+                FirstName: firstName,
+                LastName: lastName,
+                Email: email
+            })
+            contactId = createdContact.id
+        }
+    } catch (error) {
+        console.warn('[register] contact resolve failed', {
+            traceId,
+            message: error.message
+        })
+        return responseError(res, 502, 'Salesforce contact resolution failed', {
+            traceId,
+            reason: error.message
+        })
+    }
+
     // Create a short verification code and store a pending registration cookie.
     const verificationCode = createShortCode()
     const pendingRegistration = {
@@ -111,6 +140,7 @@ export default async function handler(req, res) {
     let created
     try {
         created = await createSalesforceRecord(sf, 'Webshop_User__c', {
+            Contact__c: contactId,
             Email__c: email,
             First_Name__c: firstName,
             Last_Name__c: lastName,
