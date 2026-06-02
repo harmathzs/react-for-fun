@@ -92,30 +92,50 @@ export default async function handler(req, res) {
         return responseError(res, 409, 'User already exists, please login')
     }
 
-    // Resolve a Contact for this registration. Reuse by email when present, otherwise create one.
+    // Resolve related CRM entities by email. Prefer existing records before creating a new lead.
+    let leadId
     let contactId
+    let accountId
+    let opportunityId
     try {
+        const existingLeads = await querySalesforce(
+            sf,
+            `SELECT Id, IsConverted, ConvertedContactId, ConvertedAccountId, ConvertedOpportunityId FROM Lead WHERE Email = '${escapeSoql(email)}' ORDER BY CreatedDate DESC LIMIT 1`
+        )
+
+        if (existingLeads.length > 0) {
+            const lead = existingLeads[0]
+            leadId = lead.Id
+            contactId = lead.ConvertedContactId || null
+            accountId = lead.ConvertedAccountId || null
+            opportunityId = lead.ConvertedOpportunityId || null
+        }
+
         const existingContacts = await querySalesforce(
             sf,
-            `SELECT Id FROM Contact WHERE Email = '${escapeSoql(email)}' ORDER BY CreatedDate DESC LIMIT 1`
+            `SELECT Id, AccountId FROM Contact WHERE Email = '${escapeSoql(email)}' ORDER BY CreatedDate DESC LIMIT 1`
         )
 
         if (existingContacts.length > 0) {
             contactId = existingContacts[0].Id
-        } else {
-            const createdContact = await createSalesforceRecord(sf, 'Contact', {
+            accountId = existingContacts[0].AccountId || accountId
+        }
+
+        if (!leadId && !contactId) {
+            const createdLead = await createSalesforceRecord(sf, 'Lead', {
                 FirstName: firstName,
                 LastName: lastName,
+                Company: company,
                 Email: email
             })
-            contactId = createdContact.id
+            leadId = createdLead.id
         }
     } catch (error) {
-        console.warn('[register] contact resolve failed', {
+        console.warn('[register] lead/contact resolve failed', {
             traceId,
             message: error.message
         })
-        return responseError(res, 502, 'Salesforce contact resolution failed', {
+        return responseError(res, 502, 'Salesforce lead/contact resolution failed', {
             traceId,
             reason: error.message
         })
@@ -139,8 +159,11 @@ export default async function handler(req, res) {
     // Create the Webshop_User record in Salesforce with pending verification status.
     let created
     try {
-        created = await createSalesforceRecord(sf, 'Webshop_User__c', {
-            Contact__c: contactId,
+        const webshopUserPayload = {
+            ...(leadId ? { Lead__c: leadId } : {}),
+            ...(contactId ? { Contact__c: contactId } : {}),
+            ...(accountId ? { Account__c: accountId } : {}),
+            ...(opportunityId ? { Opportunity__c: opportunityId } : {}),
             Email__c: email,
             First_Name__c: firstName,
             Last_Name__c: lastName,
@@ -151,6 +174,10 @@ export default async function handler(req, res) {
             Email_Verified__c: false,
             Failed_Login_Count__c: 0,
             Salesforce_User__c: globalThis?.process?.env?.SALESFORCE_INTEGRATION_USER_ID || null
+        }
+
+        created = await createSalesforceRecord(sf, 'Webshop_User__c', {
+            ...webshopUserPayload
         })
     } catch (error) {
         console.warn('[register] user create failed', {
