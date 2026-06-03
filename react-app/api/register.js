@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     }
 
     // Log lightweight registration context to match Vercel log lines with frontend failures.
-    console.warn('[register] start', {
+    console.log('[register] start', {
         traceId,
         emailDomain: email.includes('@') ? email.split('@')[1] : null,
         hasUsername: !!body.username
@@ -190,7 +190,7 @@ export default async function handler(req, res) {
         })
     }
 
-    console.warn('[register] success', {
+    console.log('[register] success', {
         traceId,
         webshopUserId: created.id
     })
