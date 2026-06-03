@@ -2,7 +2,7 @@
 
 ## Overview
 
-**React 4 fun** is a lightweight React single-page application (SPA) built with Vite and deployed on Vercel. Its primary purpose is to capture sales leads via a Salesforce Web-to-Lead form and redirect the user to a thank-you page after submission. The UI is light-themed with a business appearance, rounded components, and no third-party UI framework — only plain CSS.
+**React 4 fun** is a React SPA built with Vite and deployed on Vercel. It started as a Salesforce Web-to-Lead capture form and has grown into a full-stack authenticated webshop. Users can register, verify their email, log in, and access a gated shop page. All user data is stored in Salesforce custom objects. Session state is managed via AES-256-GCM encrypted HttpOnly cookies — no database or Redis required.
 
 ---
 
@@ -14,8 +14,10 @@
 | Bundler | Vite 4 |
 | Routing | react-router-dom v6 |
 | Styling | Plain CSS (`index.css`, `App.css`) |
-| Hosting | Vercel |
-| CRM integration | Salesforce Web-to-Lead (HTTP POST) |
+| Hosting | Vercel (SPA + serverless API functions) |
+| API runtime | Node.js ESM (`"type": "module"`) |
+| CRM | Salesforce — custom objects + OAuth2 Client Credentials |
+| Session storage | AES-256-GCM encrypted HttpOnly cookies |
 
 ---
 
@@ -24,17 +26,31 @@
 ```
 react-app/
 ├── index.html               # App shell, title: "React 4 fun"
-├── vercel.json              # SPA rewrite rule
+├── vercel.json              # SPA rewrite + API function routing
+├── api/                     # Vercel serverless functions (Node.js ESM)
+│   ├── session.js           # GET  — reads SITE_SESSION cookie, returns auth state
+│   ├── register.js          # POST — register new user, create Webshop_User__c
+│   ├── verify.js            # POST — verify email code, activate user
+│   ├── login.js             # POST — authenticate, create Webshop_Session__c
+│   ├── logout.js            # POST — revoke session, clear cookies
+│   ├── salesforce-auth.js   # GET/POST/DELETE — Salesforce session management
+│   └── _lib/
+│       ├── auth-utils.js    # COOKIE_KEYS, hashPassword, createShortCode, response helpers
+│       ├── cookies.js       # AES-256-GCM encrypt/decrypt, parse/set/clear cookies
+│       └── salesforce.js    # fetchSalesforceToken, ensureSalesforceSession, SOQL/REST helpers
 ├── src/
 │   ├── main.jsx             # Entry point, mounts BrowserRouter + App
-│   ├── App.jsx              # Root layout: Navbar + Routes + Footer
+│   ├── App.jsx              # Root layout: session state, route guards, Navbar, Footer
 │   ├── App.css              # All component and page styles
 │   ├── index.css            # Global reset and base styles (light theme)
 │   ├── components/
-│   │   └── Navbar.jsx       # Sticky top navigation
+│   │   └── Navbar.jsx       # Auth-aware sticky navigation with profile dropdown
 │   └── pages/
-│       ├── InterestPage.jsx # / — Web-to-Lead form page
-│       └── ThanksPage.jsx   # /thanks — Post-submission confirmation page
+│       ├── InterestPage.jsx # / — Web-to-Lead form (unauthenticated landing)
+│       ├── ThanksPage.jsx   # /thanks — Post-lead-submission confirmation
+│       ├── RegisterPage.jsx # /register — Registration + email verification flow
+│       ├── LoginPage.jsx    # /login — Login form
+│       └── ShopPage.jsx     # /shop — Authenticated shop (content pending)
 ```
 
 ---
@@ -43,20 +59,25 @@ react-app/
 
 `main.jsx` wraps the entire tree in `<BrowserRouter>` and mounts it to `#root`.
 
-`App.jsx` provides the persistent page shell:
+`App.jsx` fetches `/api/session` on mount to determine auth state. While loading it shows a spinner card. Once resolved it renders route guards:
 
 ```
-┌──────────────────────────────┐
-│  Navbar (sticky)             │
-├──────────────────────────────┤
-│  <main>                      │
-│    Route: /       → InterestPage  │
-│    Route: /thanks → ThanksPage    │
-│  </main>                     │
-├──────────────────────────────┤
-│  Footer (© year React 4 fun) │
-└──────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│  Navbar (sticky, auth-aware)                 │
+├──────────────────────────────────────────────┤
+│  <main>                                      │
+│    / → InterestPage (unauthed) | → /shop     │
+│    /shop → ShopPage (authed)   | → /         │
+│    /login → LoginPage          | → /shop     │
+│    /register → RegisterPage    | → /shop     │
+│    /thanks → ThanksPage                      │
+│  </main>                                     │
+├──────────────────────────────────────────────┤
+│  Footer (© year React 4 fun)                 │
+└──────────────────────────────────────────────┘
 ```
+
+Session state (`loading`, `authenticated`, `user`) lives in `App.jsx`. `loadSession()` re-fetches `/api/session` after login, register/verify, or logout. `handleLogout()` calls `POST /api/logout`, then `loadSession()`, then navigates to `/`.
 
 ---
 
@@ -64,12 +85,17 @@ react-app/
 
 ### `Navbar` (`src/components/Navbar.jsx`)
 
-Sticky top bar, always visible across all routes.
+Sticky top bar, always visible. Layout: CSS Grid `auto auto 1fr auto` (home icon, brand, nav links, profile area).
 
-- Brand link: **React 4 fun** → navigates to `/`
-- Nav link: **Interest in Products** → navigates to `/`, active style applied via `NavLink`
-- Placeholder comment for additional menu items
-- Styles: `.navbar`, `.navbar-inner`, `.navbar-brand`, `.navbar-links`
+- **Home icon + brand link** → `/shop` when authenticated, `/` otherwise
+- **Nav links** — context-aware:
+  - Unauthenticated: *Interest in Products*; *Login* link only while on `/login`; *Register* link only while on `/register`
+  - Authenticated: *Shop*
+- **Profile area** — username pill + avatar button opens a dropdown:
+  - Unauthenticated: Login / Register links
+  - Authenticated: Logout button
+- `displayName`: `user.firstName` → `user.username` → `user.email` → `'Guest User'`
+- Dropdown dismisses on outside click or Escape key
 
 ---
 
@@ -77,7 +103,7 @@ Sticky top bar, always visible across all routes.
 
 ### Interest Page (`src/pages/InterestPage.jsx`) — route `/`
 
-The main functional page. Contains a Salesforce Web-to-Lead HTML form styled to match the site design.
+Unauthenticated landing page. Contains the Salesforce Web-to-Lead form. Redirects to `/shop` if the user is already authenticated.
 
 #### Form behaviour
 
@@ -88,75 +114,97 @@ The main functional page. Contains a Salesforce Web-to-Lead HTML form styled to 
 - On successful submission Salesforce redirects the browser to `/thanks` (set via the hidden `retURL` field).
 - No JavaScript fetch or AJAX is involved; the browser navigates away on submit.
 
-#### Hidden fields
-
-| Field name | Value | Purpose |
-|---|---|---|
-| `oid` | `00DdM00000vOexx` | Identifies the Salesforce org |
-| `lead_source` | `Web` | Populates Lead Source picklist |
-| `retURL` | `https://react-for-fun.vercel.app/thanks` | Redirect target after submit |
-
-#### Visible fields
-
-| HTML `name` | Label shown | Required | Notes |
-|---|---|---|---|
-| `salutation` | Salutation | No | Select picklist |
-| `first_name` | First Name | **Yes** | |
-| `last_name` | Last Name | **Yes** | |
-| `email` | Email | **Yes** | `type="email"` |
-| `phone` | Phone | No | `type="tel"` |
-| `company` | Company | **Yes** | |
-| `city` | City | No | |
-| `country_code` | Country | No | Curated European + US list |
-| `street` | Street | No | textarea |
-| `state_code` | State/Province | No | Free text input |
-| `zip` | Zip | No | |
-| `description` | **Product Interest** | No | Label intentionally renamed — see Salesforce note below |
-
-Required fields are marked with a red asterisk via CSS `:has()` selector.
-
-#### Layout
-
-- Desktop: 2-column grid; Salutation + First Name + Last Name share one dedicated 3-column name row (salutation narrower at `0.8fr`).
-- Mobile (≤768px): single column, all rows stacked.
-
 ---
 
 ### Thanks Page (`src/pages/ThanksPage.jsx`) — route `/thanks`
 
-Confirmation page shown after the lead form is submitted. Salesforce redirects here via the `retURL` hidden field.
+Confirmation page shown after the Web-to-Lead form is submitted. Salesforce redirects here via the `retURL` hidden field.
 
-- Green circular checkmark icon
-- Heading: *Thank you!*
-- Short confirmation message
+- Green circular checkmark icon, *Thank you!* heading, confirmation message
 - **Back to Home** button (React Router `<Link>` to `/`)
+
+### Register Page (`src/pages/RegisterPage.jsx`) — route `/register`
+
+Two-step registration form. Redirects to `/shop` if already authenticated.
+
+**Step 1 — Registration:** collects email, password (≥8 chars), first name, last name, company. On success the API returns a `serverCode` (non-production only — displayed in the UI for testing since email sending is not yet implemented).
+
+**Step 2 — Verification:** user enters the 6-digit code. On success calls `onAuthChange()` (re-fetches session) and navigates to `/shop`.
+
+### Login Page (`src/pages/LoginPage.jsx`) — route `/login`
+
+Email + password form. Redirects to `/shop` if already authenticated. On success calls `onAuthChange()` and navigates to `/shop`.
+
+### Shop Page (`src/pages/ShopPage.jsx`) — route `/shop`
+
+Authenticated-only route. Redirects to `/` if not authenticated. **Content not yet built out.**
 
 ---
 
-## Salesforce Web-to-Lead Integration
+## Salesforce Integration
 
-### How it works
+### Web-to-Lead (InterestPage)
 
-1. User fills the form on `/` and clicks **Submit Request**.
-2. Browser posts form data directly to the Salesforce Web-to-Lead endpoint.
-3. Salesforce creates a Lead record with the posted field values.
-4. Salesforce redirects the browser to the `retURL` (`/thanks`).
-5. React Router renders `ThanksPage`.
+The lead capture form posts directly to the Salesforce Web-to-Lead endpoint. Hidden fields set `oid`, `lead_source=Web`, and `retURL`. The visible `Product Interest` field posts to the `description` field (multi-select picklist fields are unsupported by Web-to-Lead); a record-triggered Flow on Lead create copies `Description` into the real `Product Interest` field.
 
-### Known limitations and workarounds
+Custom Salesforce fields must use the `00N...` field ID (not the API name) in the HTML `name` attribute.
 
-#### `lead_source` — resolved
-Web-to-Lead does not include `lead_source` in its generated form by default. The hidden input `<input type="hidden" name="lead_source" value="Web" />` is added manually to always populate Lead Source with "Web".
+### Authentication Backend (OAuth2 Client Credentials)
 
-#### Product Interest — workaround in place
-The standard Lead field `Product Interest` is a multi-select picklist and cannot be added to the Web-to-Lead form picker. The workaround:
+All serverless API functions authenticate with Salesforce using the **OAuth2 Client Credentials** (machine-to-machine) flow against the `Custom_Webshop_External_Client_App` Connected App. No user is redirected to Salesforce — this flow runs entirely server-side.
 
-1. The visible form field labelled **Product Interest** actually posts to the Salesforce `description` field (`name="description"`), which Web-to-Lead does support.
-2. A Salesforce record-triggered **Flow** on Lead create must copy `Description` into the real `Product Interest` field.
-3. The intention is documented in a JSX comment on the field.
+The access token is cached in an encrypted `wf_salesforce_session` HttpOnly cookie and reused across requests until it expires (with a 120-second refresh buffer). `ensureSalesforceSession(req, res)` is called at the top of every handler that needs Salesforce access.
 
-#### Custom fields
-Any Salesforce custom Lead field must be referenced by its `00N...` field ID (not its API name) in the HTML `name` attribute. The ID is obtained by including the field in the Web-to-Lead form generator in Salesforce Setup and reading the generated HTML.
+**Salesforce environment:**
+- My Domain: `https://salesforfun-dev-ed.develop.my.salesforce.com`
+- API version: `v61.0`
+- Run As user: a Salesforce-licensed user (Identity license cannot hold object CRUD permissions)
+- Permission Set `Webshop Integration Access` assigned to the Run As user
+- Custom objects must be **Deployed** (not In Development) for the permission set to surface them
+
+### Custom Objects
+
+**`Webshop_User__c`** — one record per registered user
+- Fields: `Email__c`, `Username__c`, `First_Name__c`, `Last_Name__c`, `Company__c`, `Password_Hash__c` (SHA-256), `Status__c` (restricted picklist: `Pending_Verification`, `Active`), `Email_Verified__c`, `Email_Verified_At__c`, `Failed_Login_Count__c`, `Last_Login_At__c`
+- Optional lookup fields: `Lead__c`, `Contact__c`, `Account__c`, `Opportunity__c` — populated during registration from existing Lead/Contact data; support future Lead conversion
+
+**`Webshop_Session__c`** — one record per login session
+- Fields: `Session_Id__c`, `Issued_At__c`, `Expires_At__c`, `Last_Seen_At__c`, `Active__c`, `Revoked_At__c`
+
+### API Endpoints
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/session` | GET | Read `wf_site_session` cookie; return `{ authenticated, user }` |
+| `/api/register` | POST | Validate fields → Salesforce duplicate check → Lead/Contact lookup → create `Webshop_User__c` → set `wf_pending_registration` cookie |
+| `/api/verify` | POST | Validate code from body against `wf_pending_registration` cookie → update `Webshop_User__c` to Active → set `wf_site_session` + `wf_verified_user` cookies |
+| `/api/login` | POST | Query `Webshop_User__c` → validate status + hash → create `Webshop_Session__c` → set `wf_site_session` cookie |
+| `/api/logout` | POST | Set `Webshop_Session__c.Active__c = false`, `Revoked_At__c` → clear session cookies |
+| `/api/salesforce-auth` | GET/POST/DELETE | Salesforce session status / connect / clear |
+
+### Cookie Inventory
+
+| Cookie | TTL | Contents |
+|---|---|---|
+| `wf_site_session` | 8 hours | `webshopUserId`, `email`, `firstName`, `lastName`, `company`, `loginAt`, `expiresAt` |
+| `wf_verified_user` | 30 days | email of verified user (local duplicate-check shortcut) |
+| `wf_pending_registration` | 30 minutes | `verificationCode` (hashed), `hashedPassword`, `webshopUserId`, `email`, `expiry` |
+| `wf_salesforce_session` | 1 hour | Salesforce `accessToken`, `instanceUrl`, `expiresAt` |
+
+All cookies are AES-256-GCM encrypted, `HttpOnly`, `SameSite=Strict`.
+
+### Environment Variables
+
+| Variable | Purpose |
+|---|---|
+| `SALESFORCE_CONSUMER_KEY` | Connected App client ID |
+| `SALESFORCE_CONSUMER_SECRET` | Connected App client secret |
+| `SALESFORCE_LOGIN_URL` | `https://salesforfun-dev-ed.develop.my.salesforce.com` |
+| `SALESFORCE_API_VERSION` | `v61.0` |
+| `SALESFORCE_ORG_ID` | Org ID |
+| `SALESFORCE_INTEGRATION_USER_ID` | Run As user ID |
+| `APP_COOKIE_SECRET` | AES-256-GCM cookie encryption key |
+| `NODE_ENV` | `production` on Vercel; non-production returns `verificationCode` in response body |
 
 ---
 
@@ -175,18 +223,22 @@ Key CSS classes:
 |---|---|
 | `.app-layout` | Full-height flex column for sticky footer |
 | `.page-card` | White rounded card (`border-radius: 16px`) for page content |
-| `.form-card` | Modifier on `.page-card` that widens max-width to 860px for the form |
+| `.auth-card` | Narrower card variant used for login/register/verify forms |
+| `.form-card` | Wider card variant for the Web-to-Lead form (max-width 860px) |
 | `.form-grid` | 2-column CSS grid for form fields |
 | `.name-row` | 3-column sub-grid (`0.8fr 1.2fr 1.2fr`) for Salutation/First/Last |
 | `.field` | Flex column wrapper for label + input pairs |
 | `.field-full` | Spans both columns (`grid-column: 1 / -1`) |
 | `.btn-primary` | Blue rounded button (`#2563eb`) |
+| `.navbar-inner` | CSS Grid `auto auto 1fr auto` — home icon, brand, links, profile |
+| `.profile-dropdown` | Absolute-positioned dropdown from profile avatar button |
+| `.username-pill` | Truncated display name chip in the navbar |
 
 ---
 
 ## Deployment (Vercel)
 
-`vercel.json` contains a catch-all rewrite rule so that Vercel always serves `index.html` for any path, allowing React Router's client-side routing to work correctly:
+`vercel.json` contains a catch-all rewrite so Vercel serves `index.html` for all non-API paths, enabling React Router client-side routing:
 
 ```json
 {
@@ -196,12 +248,26 @@ Key CSS classes:
 }
 ```
 
-Without this rule, a direct browser visit to `/thanks` would return a 404 from Vercel.
+API functions in `api/` are automatically served as Vercel serverless functions at `/api/*`.
+
+Live URL: `https://react-for-fun.vercel.app`
+
+---
+
+## Pending / Not Yet Implemented
+
+| Feature | Notes |
+|---|---|
+| Email sending for verification | Code is returned in API response body in non-production only. Plan: Salesforce Apex email or external provider (Resend/SendGrid). When implemented, store hashed code + expiry on `Webshop_User__c` and validate against Salesforce instead of cookie. |
+| ShopPage content | Route and auth guard exist; page content not built out |
+| `Webshop_Session__c` cleanup | No Scheduled Flow/Apex job yet to expire old session records |
+| Lead conversion on basket fill | `Webshop_User__c` lookup fields (`Lead__c`, `Contact__c`, `Account__c`, `Opportunity__c`) are in place; conversion logic not yet implemented |
 
 ---
 
 ## Extending the Site
 
-- **Add a menu item:** add a `<li><NavLink>` inside the `<ul>` in `Navbar.jsx`.
-- **Add a page:** create `src/pages/NewPage.jsx`, add a `<Route>` in `App.jsx`, and link it in `Navbar.jsx`.
-- **Add a custom Salesforce field:** include the field in the Web-to-Lead form generator, copy the `00N...` name from the generated HTML, and add a matching `<input>` in `InterestPage.jsx`.
+- **Add a nav link:** add a `<li><NavLink>` inside the `<ul>` in `Navbar.jsx`.
+- **Add a page:** create `src/pages/NewPage.jsx`, add a `<Route>` in `App.jsx`, link it in `Navbar.jsx`.
+- **Add a Salesforce custom Lead field (Web-to-Lead):** include the field in the Web-to-Lead form generator in Salesforce Setup, copy the `00N...` name from the generated HTML, and add a matching `<input>` in `InterestPage.jsx`.
+- **Add a `Webshop_User__c` field:** add the field in Salesforce, deploy it, update the Permission Set, then update the SOQL in `login.js` and the session payload in `login.js` / `session.js`.
