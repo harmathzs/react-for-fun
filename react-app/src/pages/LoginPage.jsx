@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
-export default function LoginPage() {
+export default function LoginPage({ onAuthChange }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const navigate = useNavigate()
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -30,7 +31,9 @@ export default function LoginPage() {
         return
       }
 
+      await onAuthChange()
       setMessage('Login successful. You can continue to the webshop.')
+      navigate('/shop', { replace: true })
     } catch {
       setError('Network error while logging in. Please try again.')
     } finally {

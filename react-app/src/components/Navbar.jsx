@@ -1,9 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 
-export default function Navbar() {
+export default function Navbar({ authenticated, user, onLogout }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const profileRef = useRef(null)
+  const navigate = useNavigate()
+
+  const displayName = user?.firstName || user?.username || user?.email || 'Guest User'
+  const homePath = authenticated ? '/shop' : '/'
+
+  async function handleLogoutClick() {
+    setIsProfileOpen(false)
+    await onLogout()
+    navigate('/', { replace: true })
+  }
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -30,21 +40,21 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <NavLink to="/" className="navbar-home" aria-label="Go to home">
+        <NavLink to={homePath} className="navbar-home" aria-label="Go to home">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 3.2 2.8 10.6a1 1 0 0 0 1.3 1.54l1.4-1.12V20a1 1 0 0 0 1 1h4.9a1 1 0 0 0 1-1v-4.6h1.2V20a1 1 0 0 0 1 1h4.9a1 1 0 0 0 1-1v-8.98l1.39 1.12a1 1 0 1 0 1.26-1.54L12 3.2Z" />
           </svg>
         </NavLink>
 
-        <NavLink to="/" className="navbar-brand">React 4 fun</NavLink>
+        <NavLink to={homePath} className="navbar-brand">React 4 fun</NavLink>
 
         <ul className="navbar-links">
-          <li><NavLink to="/" end>Interest in Products</NavLink></li>
-          <li><NavLink to="/shop">Shop</NavLink></li>
+          {!authenticated && <li><NavLink to="/" end>Interest in Products</NavLink></li>}
+          {authenticated && <li><NavLink to="/shop">Shop</NavLink></li>}
         </ul>
 
         <div className="navbar-profile" aria-label="User area" ref={profileRef}>
-          <span className="username-pill" title="User name placeholder">Guest User</span>
+          <span className="username-pill" title={displayName}>{displayName}</span>
           <button
             type="button"
             className="profile-trigger"
@@ -64,8 +74,14 @@ export default function Navbar() {
 
           {isProfileOpen && (
             <div className="profile-dropdown" role="menu" aria-label="Profile menu">
-              <NavLink to="/login" className="profile-menu-item" role="menuitem" onClick={() => setIsProfileOpen(false)}>Login</NavLink>
-              <NavLink to="/register" className="profile-menu-item" role="menuitem" onClick={() => setIsProfileOpen(false)}>Register</NavLink>
+              {authenticated ? (
+                <button type="button" className="profile-menu-item" role="menuitem" onClick={handleLogoutClick}>Logout</button>
+              ) : (
+                <>
+                  <NavLink to="/login" className="profile-menu-item" role="menuitem" onClick={() => setIsProfileOpen(false)}>Login</NavLink>
+                  <NavLink to="/register" className="profile-menu-item" role="menuitem" onClick={() => setIsProfileOpen(false)}>Register</NavLink>
+                </>
+              )}
             </div>
           )}
         </div>

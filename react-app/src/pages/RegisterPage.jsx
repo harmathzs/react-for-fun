@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 const initialForm = {
   firstName: '',
@@ -11,7 +11,7 @@ const initialForm = {
   confirmPassword: ''
 }
 
-export default function RegisterPage() {
+export default function RegisterPage({ onAuthChange }) {
   const [form, setForm] = useState(initialForm)
   const [verifyCode, setVerifyCode] = useState('')
   const [serverCode, setServerCode] = useState('')
@@ -20,6 +20,7 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [registrationReady, setRegistrationReady] = useState(false)
+  const navigate = useNavigate()
 
   function updateField(event) {
     const { name, value } = event.target
@@ -100,7 +101,9 @@ export default function RegisterPage() {
         return
       }
 
-      setMessage('Email verified. You can now login.')
+      await onAuthChange()
+      setMessage('Email verified. Redirecting to the webshop.')
+      navigate('/shop', { replace: true })
     } catch {
       setError('Network error while verifying. Please try again.')
     } finally {

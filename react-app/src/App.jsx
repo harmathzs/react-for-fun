@@ -11,13 +11,35 @@ import './App.css'
 export default function App() {
   const [sessionState, setSessionState] = useState({
     loading: true,
-    authenticated: false
+    authenticated: false,
+    user: null
   })
+
+  async function loadSession() {
+    try {
+      const response = await fetch('/api/session', {
+        credentials: 'include'
+      })
+      const payload = await response.json()
+
+      setSessionState({
+        loading: false,
+        authenticated: !!payload?.authenticated,
+        user: payload?.user || null
+      })
+    } catch {
+      setSessionState({
+        loading: false,
+        authenticated: false,
+        user: null
+      })
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
 
-    async function loadSession() {
+    async function loadInitialSession() {
       try {
         const response = await fetch('/api/session', {
           credentials: 'include'
@@ -28,27 +50,44 @@ export default function App() {
 
         setSessionState({
           loading: false,
-          authenticated: !!payload?.authenticated
+          authenticated: !!payload?.authenticated,
+          user: payload?.user || null
         })
       } catch {
         if (cancelled) return
         setSessionState({
           loading: false,
-          authenticated: false
+          authenticated: false,
+          user: null
         })
       }
     }
 
-    loadSession()
+    loadInitialSession()
 
     return () => {
       cancelled = true
     }
   }, [])
 
+  async function handleLogout() {
+    try {
+      await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include'
+      })
+    } finally {
+      await loadSession()
+    }
+  }
+
   return (
     <div className="app-layout">
-      <Navbar />
+      <Navbar
+        authenticated={sessionState.authenticated}
+        user={sessionState.user}
+        onLogout={handleLogout}
+      />
       <main className="main-content">
         {sessionState.loading ? (
           <section className="page-card auth-card auth-card-sm">
@@ -64,8 +103,22 @@ export default function App() {
             path="/shop"
             element={sessionState.authenticated ? <ShopPage /> : <Navigate to="/" replace />}
           />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/register"
+            element={
+              sessionState.authenticated
+                ? <Navigate to="/shop" replace />
+                : <RegisterPage onAuthChange={loadSession} />
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              sessionState.authenticated
+                ? <Navigate to="/shop" replace />
+                : <LoginPage onAuthChange={loadSession} />
+            }
+          />
           <Route path="/thanks" element={<ThanksPage />} />
         </Routes>
         )}
