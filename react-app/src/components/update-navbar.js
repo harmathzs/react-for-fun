@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+const fs = require('fs');
+
+const content = `import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 
 export default function Navbar({ authenticated, user, onLogout }) {
@@ -92,3 +94,7 @@ export default function Navbar({ authenticated, user, onLogout }) {
     </nav>
   )
 }
+`;
+
+fs.writeFileSync('Navbar.jsx', content, 'utf8');
+console.log('Navbar.jsx updated successfully');
