@@ -1,4 +1,5 @@
-import { Routes, Route } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import Navbar from './components/Navbar.jsx'
 import InterestPage from './pages/InterestPage.jsx'
 import ThanksPage from './pages/ThanksPage.jsx'
@@ -8,17 +9,66 @@ import LoginPage from './pages/LoginPage.jsx'
 import './App.css'
 
 export default function App() {
+  const [sessionState, setSessionState] = useState({
+    loading: true,
+    authenticated: false
+  })
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadSession() {
+      try {
+        const response = await fetch('/api/session', {
+          credentials: 'include'
+        })
+        const payload = await response.json()
+
+        if (cancelled) return
+
+        setSessionState({
+          loading: false,
+          authenticated: !!payload?.authenticated
+        })
+      } catch {
+        if (cancelled) return
+        setSessionState({
+          loading: false,
+          authenticated: false
+        })
+      }
+    }
+
+    loadSession()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <div className="app-layout">
       <Navbar />
       <main className="main-content">
+        {sessionState.loading ? (
+          <section className="page-card auth-card auth-card-sm">
+            <p>Loading session...</p>
+          </section>
+        ) : (
         <Routes>
-          <Route path="/" element={<InterestPage />} />
-          <Route path="/shop" element={<ShopPage />} />
+          <Route
+            path="/"
+            element={sessionState.authenticated ? <Navigate to="/shop" replace /> : <InterestPage />}
+          />
+          <Route
+            path="/shop"
+            element={sessionState.authenticated ? <ShopPage /> : <Navigate to="/" replace />}
+          />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/thanks" element={<ThanksPage />} />
         </Routes>
+        )}
       </main>
       <footer className="footer">
         <p>&copy; {new Date().getFullYear()} React 4 fun</p>
