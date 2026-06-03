@@ -50,6 +50,7 @@ export default function Navbar({ authenticated, user, onLogout }) {
 
         <ul className="navbar-links">
           {!authenticated && <li><NavLink to="/" end>Interest in Products</NavLink></li>}
+          {!authenticated && <li><NavLink to="/login">Login</NavLink></li>}
           {!authenticated && <li><NavLink to="/register">Register</NavLink></li>}
           {authenticated && <li><NavLink to="/shop">Shop</NavLink></li>}
         </ul>
