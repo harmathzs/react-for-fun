@@ -20,12 +20,19 @@ import {
 const SITE_SESSION_TTL_SECONDS = 60 * 60 * 8
 
 export default async function handler(req, res) {
+    const traceId = `login_${Date.now()}_${Math.floor(Math.random() * 100000)}`
+
     if (!onlyMethods(req, res, ['POST'])) return
 
     // Parse login credentials from the request body.
     const body = readJsonBody(req)
     const email = String(body.email || '').trim().toLowerCase()
     const password = String(body.password || '')
+
+    console.log('[login] start', {
+        traceId,
+        emailDomain: email.includes('@') ? email.split('@')[1] : null
+    })
 
     if (!email || !password) {
         return responseError(res, 400, 'Email and password are required')
@@ -101,6 +108,12 @@ export default async function handler(req, res) {
         },
         SITE_SESSION_TTL_SECONDS
     )
+
+    console.log('[login] success', {
+        traceId,
+        webshopUserId: user.Id,
+        email: user.Email__c
+    })
 
     return responseOk(res, {
         message: 'Logged in successfully',
