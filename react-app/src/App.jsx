@@ -6,6 +6,8 @@ import ThanksPage from './pages/ThanksPage.jsx'
 import ShopPage from './pages/ShopPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
+import ProductsPage from './pages/ProductsPage.jsx'
+import CartPage from './pages/CartPage.jsx'
 import './App.css'
 import Footer from './components/Footer'
 
@@ -121,6 +123,8 @@ export default function App() {
             }
           />
           <Route path="/thanks" element={<ThanksPage />} />
+          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/cart" element={<CartPage />} />
         </Routes>
         )}
       </main>
