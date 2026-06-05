@@ -259,6 +259,12 @@
   margin: 0 auto;
 }
 
+/* Allow the products page to be wider than other page-cards */
+.products-page.page-card {
+  max-width: 1200px;
+  padding: 2rem;
+}
+
 .form-card {
   max-width: 860px;
 }
@@ -584,7 +590,7 @@
 
 .products-list .cards-wrap {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
 }
 
@@ -636,13 +642,20 @@
 }
 
 .icon-cart {
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  padding: 0.45rem 0.6rem;
-  border-radius: 6px;
+  background: transparent;
+  color: #2563eb;
+  border: 1px solid rgba(37,99,235,0.12);
+  padding: 0.35rem 0.45rem;
+  border-radius: 8px;
   cursor: pointer;
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.95rem;
+  width: 36px;
+  height: 36px;
 }
+
+.icon-cart:active { transform: translateY(1px); }
 
 
 .quick-order {
