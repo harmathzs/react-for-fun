@@ -585,6 +585,50 @@
   color: #475569;
 }
 
+/* prevent promotional image from overflowing the right column */
+.product-image {
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.image-box img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.row-labels {
+  display: grid;
+  grid-template-columns: 1fr 88px;
+  gap: 0.5rem;
+  align-items: center;
+  color: #475569;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.row-labels span:last-child {
+  text-align: center;
+}
+
+.link-add {
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-block;
+  padding: 0.45rem 0.6rem;
+}
+
+.link-add:hover {
+  text-decoration: underline;
+}
+
+.addcart-wrap {
+  margin-top: 0.45rem;
+}
+
 .product-rows {
   display: grid;
   gap: 0.5rem;

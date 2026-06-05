@@ -48,6 +48,10 @@ export default function ShopPage() {
       <section className="quick-order-grid">
         <div className="quick-order">
           <h2>Quick Order</h2>
+          <label className="row-labels">
+            <span>Product</span>
+            <span>Quantity</span>
+          </label>
           <div className="product-rows">
             {rows.map((r, i) => (
               <div className="product-row" key={i}>
@@ -72,8 +76,10 @@ export default function ShopPage() {
           </div>
 
           <div className="quick-order-actions">
-            <LoadingButton className="btn-add" loading={adding} onClick={addRow}>+ Add Product</LoadingButton>
-            <LoadingButton className="btn-primary" loading={addingToCart} onClick={addToCart}>Add to cart</LoadingButton>
+            <a className="link-add" role="button" onClick={addRow}>+ Add Product</a>
+            <div className="addcart-wrap">
+              <LoadingButton className="btn-primary" loading={addingToCart} onClick={addToCart}>Add to cart</LoadingButton>
+            </div>
           </div>
         </div>
 
