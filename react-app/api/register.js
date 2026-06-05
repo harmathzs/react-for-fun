@@ -158,13 +158,14 @@ export default async function handler(req, res) {
 
     // Send verification code through Apex so production does not depend on response body codes.
     try {
-        await sendVerificationEmailViaApex(sf, {
+        let emailSendResult = await sendVerificationEmailViaApex(sf, {
             leadId: leadId || null,
             email,
             firstName,
             code: verificationCode,
             expiryMinutes: Math.floor(PENDING_REGISTRATION_TTL_SECONDS / 60)
         })
+        console.log('emailSendResult: ', emailSendResult)
     } catch (error) {
         console.warn('[register] verification email send failed', {
             traceId,
