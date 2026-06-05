@@ -78,18 +78,25 @@ export default async function handler(req, res) {
     })
 
     // Create a dedicated Webshop_Session record for audit and future revocation.
+    // Do NOT write formula/read-only fields like `Active__c`. Ensure timestamps
+    // and Expires_At__c are present so the formula can evaluate correctly.
     const sessionToken = crypto.randomUUID()
     const sessionIssuedAt = new Date()
     const sessionExpiresAt = new Date(Date.now() + SITE_SESSION_TTL_SECONDS * 1000)
 
-    await createSalesforceRecord(sf, 'Webshop_Session__c', {
-        Webshop_User__c: user.Id,
-        Session_Id__c: sessionToken,
-        Issued_At__c: sessionIssuedAt.toISOString(),
-        Expires_At__c: sessionExpiresAt.toISOString(),
-        Last_Seen_At__c: sessionIssuedAt.toISOString(),
-        Active__c: true
-    })
+    let sessionCreateResult = null
+    try {
+        sessionCreateResult = await createSalesforceRecord(sf, 'Webshop_Session__c', {
+            Webshop_User__c: user.Id,
+            Session_Id__c: sessionToken,
+            Issued_At__c: sessionIssuedAt.toISOString(),
+            Expires_At__c: sessionExpiresAt.toISOString(),
+            Last_Seen_At__c: sessionIssuedAt.toISOString()
+        })
+        console.log('[login] session create response', { traceId, sessionCreateResult })
+    } catch (err) {
+        console.error('[login] session create error', { traceId, error: err && err.message ? err.message : err, raw: err })
+    }
 
     // Store site session details in encrypted HttpOnly cookie.
     setCookieObject(
