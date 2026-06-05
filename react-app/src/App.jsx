@@ -7,6 +7,7 @@ import ShopPage from './pages/ShopPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import './App.css'
+import Footer from './components/Footer'
 
 export default function App() {
   const [sessionState, setSessionState] = useState({
@@ -123,9 +124,7 @@ export default function App() {
         </Routes>
         )}
       </main>
-      <footer className="footer">
-        <p>&copy; {new Date().getFullYear()} React 4 fun</p>
-      </footer>
+      <Footer />
     </div>
   )
 }
