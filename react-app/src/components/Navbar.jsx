@@ -101,7 +101,14 @@ export default function Navbar({ authenticated, user, onLogout }) {
           {isProfileOpen && (
             <div className="profile-dropdown" role="menu" aria-label="Profile menu">
               {authenticated ? (
-                <button type="button" className="profile-menu-item" role="menuitem" onClick={handleLogoutClick}>Logout</button>
+                <>
+                  <NavLink to="/account" className="profile-menu-item" role="menuitem" onClick={() => setIsProfileOpen(false)}>My Account</NavLink>
+                  <NavLink to="/orders" className="profile-menu-item" role="menuitem" onClick={() => setIsProfileOpen(false)}>Orders</NavLink>
+                  <NavLink to="/quotes" className="profile-menu-item" role="menuitem" onClick={() => setIsProfileOpen(false)}>My Quotes</NavLink>
+                  <NavLink to="/my-list" className="profile-menu-item" role="menuitem" onClick={() => setIsProfileOpen(false)}>My List</NavLink>
+                  <hr style={{border: 'none', borderTop: '1px solid #e6eef9', margin: '0.4rem 0'}} />
+                  <button type="button" className="profile-menu-item" role="menuitem" onClick={handleLogoutClick}>Log Out</button>
+                </>
               ) : (
                 <>
                   <NavLink to="/login" className="profile-menu-item" role="menuitem" onClick={() => setIsProfileOpen(false)}>Login</NavLink>
