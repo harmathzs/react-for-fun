@@ -1,4 +1,14 @@
+import { useState } from 'react'
+import LoadingButton from '../components/LoadingButton'
+
 export default function InterestPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  function handleSubmit(e) {
+    setIsSubmitting(true)
+    // allow normal form submission to proceed; the browser will navigate away
+  }
+
   return (
     <div className="page-card form-card">
       <h1>Interest in Products</h1>
@@ -105,7 +115,9 @@ export default function InterestPage() {
           </div>
         </div>
 
-        <button type="submit" className="btn-primary w2l-submit">Submit Request</button>
+        <LoadingButton type="submit" className="btn-primary w2l-submit" isLoading={isSubmitting} onClick={handleSubmit}>
+          Submit Request
+        </LoadingButton>
         <p className="form-note">Required: First Name, Last Name, Company, and Email. <br />After submit, Salesforce redirects to the thank-you page.</p>
       </form>
     </div>

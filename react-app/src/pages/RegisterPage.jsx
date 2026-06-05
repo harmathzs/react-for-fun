@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import LoadingButton from '../components/LoadingButton'
 
 const initialForm = {
   firstName: '',
@@ -201,9 +202,9 @@ export default function RegisterPage({ onAuthChange }) {
           </div>
         </div>
 
-        <button className="btn-primary" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Submitting...' : 'Register'}
-        </button>
+        <LoadingButton className="btn-primary" type="submit" isLoading={isSubmitting}>
+          Register
+        </LoadingButton>
       </form>
 
       {registrationReady && (
@@ -226,9 +227,9 @@ export default function RegisterPage({ onAuthChange }) {
             />
           </div>
 
-          <button className="btn-primary" type="submit" disabled={isVerifying}>
-            {isVerifying ? 'Verifying...' : 'Verify'}
-          </button>
+          <LoadingButton className="btn-primary" type="submit" isLoading={isVerifying}>
+            Verify
+          </LoadingButton>
         </form>
       )}
 

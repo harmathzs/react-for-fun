@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import LoadingButton from '../components/LoadingButton'
 
 export default function LoginPage({ onAuthChange }) {
   const [email, setEmail] = useState('')
@@ -69,9 +70,9 @@ export default function LoginPage({ onAuthChange }) {
           />
         </div>
 
-        <button className="btn-primary" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Logging in...' : 'Login'}
-        </button>
+        <LoadingButton className="btn-primary" type="submit" isLoading={isSubmitting}>
+          Login
+        </LoadingButton>
       </form>
 
       {message && <p className="auth-success">{message}</p>}
