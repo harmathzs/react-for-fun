@@ -9,7 +9,9 @@ export default function Navbar({ authenticated, user, onLogout }) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
-  const displayName = user?.firstName || user?.username || user?.email || 'Guest User'
+  const displayName = user
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || user.email
+    : 'Guest User'
   const homePath = authenticated ? '/shop' : '/'
 
   async function handleLogoutClick() {
