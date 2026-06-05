@@ -43,8 +43,10 @@ export default async function handler(req, res) {
                         sf,
                         `SELECT Id, Session_Id__c FROM Webshop_Session__c WHERE Webshop_User__c = '${escapeSoql(currentSession.webshopUserId)}' ORDER BY CreatedDate DESC LIMIT 20`
                     )
+                    console.log('[logout] fallback rows count', { traceId: currentSession?.sessionToken ? `logout_${currentSession.sessionToken}` : 'unknown', count: rows.length })
                     const match = rows.find(r => r.Session_Id__c === currentSession.sessionToken)
                     if (match?.Id) {
+                        console.log('[logout] matched session id', { matchedId: match.Id, sessionToken: currentSession.sessionToken })
                         await updateSalesforceRecord(sf, 'Webshop_Session__c', match.Id, {
                             Revoked_At__c: new Date().toISOString()
                         })
