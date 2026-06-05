@@ -40,8 +40,8 @@ export default function ShopPage() {
     <main className="page-card shop-card">
       <section className="hero-banner">
         <div className="hero-inner">
-          <h1>Welcome back — Quick Order</h1>
-          <p>Fast add products by SKU or name and quantity.</p>
+          <h1>Quick Order</h1>
+          <p>&nbsp;</p>
         </div>
       </section>
 
