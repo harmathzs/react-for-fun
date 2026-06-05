@@ -15,7 +15,8 @@ import {
     createSalesforceRecord,
     ensureSalesforceSession,
     escapeSoql,
-    querySalesforce
+    querySalesforce,
+    sendVerificationEmailViaApex
 } from './_lib/salesforce.js'
 
 const PENDING_REGISTRATION_TTL_SECONDS = 60 * 30
@@ -148,10 +149,32 @@ export default async function handler(req, res) {
         firstName,
         lastName,
         company,
+        leadId: leadId || null,
         username: String(body.username || email).trim().toLowerCase(),
         passwordHash: hashPassword(password),
         verificationCode,
         expiresAt: Math.floor(Date.now() / 1000) + PENDING_REGISTRATION_TTL_SECONDS
+    }
+
+    // Send verification code through Apex so production does not depend on response body codes.
+    try {
+        await sendVerificationEmailViaApex(sf, {
+            leadId: leadId || null,
+            email,
+            firstName,
+            code: verificationCode,
+            expiryMinutes: Math.floor(PENDING_REGISTRATION_TTL_SECONDS / 60)
+        })
+    } catch (error) {
+        console.warn('[register] verification email send failed', {
+            traceId,
+            leadId: leadId || null,
+            message: error.message
+        })
+        return responseError(res, 502, 'Failed to send verification email', {
+            traceId,
+            reason: error.message
+        })
     }
 
     clearCookieObject(res, COOKIE_KEYS.SITE_SESSION)

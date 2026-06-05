@@ -73,6 +73,22 @@ export default async function handler(req, res) {
         Email_Verified_At__c: new Date().toISOString()
     })
 
+    // Keep optional Lead reporting fields in sync when a linked lead exists.
+    if (pending.leadId) {
+        try {
+            await updateSalesforceRecord(sf, 'Lead', pending.leadId, {
+                Email_Verified__c: true,
+                Email_Verified_At__c: new Date().toISOString(),
+                Verification_Channel__c: 'Email'
+            })
+        } catch (error) {
+            console.warn('[verify] lead sync failed', {
+                leadId: pending.leadId,
+                message: error.message
+            })
+        }
+    }
+
     // Promote pending registration into verified profile cookie.
     const verifiedUser = {
         id: userId,

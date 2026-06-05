@@ -143,3 +143,16 @@ export async function updateSalesforceRecord(session, objectApiName, recordId, p
     body: JSON.stringify(payload)
   })
 }
+
+export async function sendVerificationEmailViaApex(session, payload) {
+  const data = await callSalesforceApi(session, '/services/apexrest/webshop/verification-email', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+
+  if (!data?.ok) {
+    throw new Error(data?.message || 'Verification email API returned failure')
+  }
+
+  return data
+}
