@@ -80,23 +80,23 @@ export default function Navbar({ authenticated, user, onLogout }) {
           )}
 
           <div className="navbar-profile" aria-label="User area" ref={profileRef}>
-          <span className="username-pill" title={displayName}>{displayName}</span>
-          <button
-            type="button"
-            className="profile-trigger"
-            aria-haspopup="menu"
-            aria-expanded={isProfileOpen}
-            onClick={() => setIsProfileOpen((prev) => !prev)}
-          >
-            <span className="avatar-circle" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <path d="M12 12a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4Zm0 1.8c-4.58 0-8.3 2.53-8.3 5.65a1 1 0 0 0 1 1h14.6a1 1 0 0 0 1-1c0-3.12-3.72-5.65-8.3-5.65Z" />
+            <button
+              type="button"
+              className="profile-trigger"
+              aria-haspopup="menu"
+              aria-expanded={isProfileOpen}
+              onClick={() => setIsProfileOpen((prev) => !prev)}
+            >
+              <span className="avatar-circle" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 12a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4Zm0 1.8c-4.58 0-8.3 2.53-8.3 5.65a1 1 0 0 0 1 1h14.6a1 1 0 0 0 1-1c0-3.12-3.72-5.65-8.3-5.65Z" />
+                </svg>
+              </span>
+              <span className="username-pill" title={displayName}>{displayName}</span>
+              <svg className="trigger-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6.2 9.2a1 1 0 0 1 1.4 0L12 13.6l4.4-4.4a1 1 0 1 1 1.4 1.4l-5.1 5.1a1 1 0 0 1-1.4 0l-5.1-5.1a1 1 0 0 1 0-1.4Z" />
               </svg>
-            </span>
-            <svg className="trigger-chevron" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M6.2 9.2a1 1 0 0 1 1.4 0L12 13.6l4.4-4.4a1 1 0 1 1 1.4 1.4l-5.1 5.1a1 1 0 0 1-1.4 0l-5.1-5.1a1 1 0 0 1 0-1.4Z" />
-            </svg>
-          </button>
+            </button>
 
           {isProfileOpen && (
             <div className="profile-dropdown" role="menu" aria-label="Profile menu">
