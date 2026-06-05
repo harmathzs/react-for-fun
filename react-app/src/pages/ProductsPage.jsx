@@ -50,7 +50,7 @@ export default function ProductsPage() {
 
       <div className="products-grid">
         <div className="filters-row">
-          <div className="family-badges">
+          <div className="family-badges">Product Familyf&nbsp;
             <button className={`badge ${familyFilter === '' ? 'active' : ''}`} onClick={() => setFamilyFilter('')}>All</button>
             <button className={`badge ${familyFilter === '__none' ? 'active' : ''}`} onClick={() => setFamilyFilter('__none')}>None</button>
             {families.map(f => (
