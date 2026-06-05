@@ -85,7 +85,7 @@ export default function ShopPage() {
         </div>
 
         <aside className="product-image">
-          <div className="image-box">Promotional image or product</div>
+          <div className="image-box">Promotional image</div>
         </aside>
       </section>
     </main>
