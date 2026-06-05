@@ -575,17 +575,65 @@
 /* Products grid layout */
 .products-grid {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 1fr;
   gap: 1.25rem;
   align-items: start;
   margin-top: 1rem;
 }
 
-.products-filters {
-  background: #fff;
+.filters-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.family-badges {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.badge {
   border: 1px solid #e6eef9;
-  padding: 0.85rem;
+  background: #fff;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #334155;
+}
+
+.badge.active {
+  background: #e6f0ff;
+  border-color: #cfe0ff;
+  color: #1d4ed8;
+}
+
+.sort-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.sort-btn {
+  border: 1px solid #eef3ff;
+  background: #fff;
+  padding: 0.35rem 0.6rem;
   border-radius: 8px;
+  cursor: pointer;
+}
+
+.sort-btn.active {
+  background: #eef6ff;
+  border-color: #d7e6ff;
+}
+
+.sort-icon {
+  margin-left: 0.35rem;
+  font-size: 0.7rem;
+  opacity: 0.9;
 }
 
 .products-list .cards-wrap {

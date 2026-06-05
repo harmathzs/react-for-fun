@@ -49,24 +49,22 @@ export default function ProductsPage() {
       <p>Browse active products from Salesforce. Prices come from the active PricebookEntry.</p>
 
       <div className="products-grid">
-        <aside className="products-filters">
-          <h3>Filters</h3>
-          <div className="filter-group">
-            <label>Product Family</label>
-            <select value={familyFilter} onChange={(e)=>setFamilyFilter(e.target.value)}>
-              <option value="">All</option>
-              {families.map(f=> <option key={f} value={f}>{f}</option>)}
-            </select>
+        <div className="filters-row">
+          <div className="family-badges">
+            <button className={`badge ${familyFilter === '' ? 'active' : ''}`} onClick={() => setFamilyFilter('')}>All</button>
+            <button className={`badge ${familyFilter === '__none' ? 'active' : ''}`} onClick={() => setFamilyFilter('__none')}>None</button>
+            {families.map(f => (
+              <button key={f} className={`badge ${familyFilter === f ? 'active' : ''}`} onClick={() => setFamilyFilter(f)}>{f}</button>
+            ))}
           </div>
-          <div className="filter-group">
+
+          <div className="sort-controls">
             <label>Sort</label>
-            <select value={sort} onChange={(e)=>setSort(e.target.value)}>
-              <option value="name">Name</option>
-              <option value="price-asc">Price ↑</option>
-              <option value="price-desc">Price ↓</option>
-            </select>
+            <button className={`sort-btn ${sort === 'price-asc' ? 'active' : ''}`} onClick={() => setSort('price-asc')}>Price <span className="sort-icon">▲</span></button>
+            <button className={`sort-btn ${sort === 'price-desc' ? 'active' : ''}`} onClick={() => setSort('price-desc')}>Price <span className="sort-icon">▼</span></button>
+            <button className={`sort-btn ${sort === 'name' ? 'active' : ''}`} onClick={() => setSort('name')}>Name</button>
           </div>
-        </aside>
+        </div>
 
         <div className="products-list">
           {loading ? <p>Loading products...</p> : (
