@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import LoadingButton from '../components/LoadingButton'
 
-export default function ShopPage() {
+export default function HomePage() {
   const [rows, setRows] = useState([
     { query: '', qty: 1 },
     { query: '', qty: 1 },
@@ -37,11 +37,11 @@ export default function ShopPage() {
   }
 
   return (
-    <main className="page-card shop-card">
+    <main className="page-container">
       <section className="hero-banner">
         <div className="hero-inner">
-          <h1>Welcome back — Quick Order</h1>
-          <p>Fast add products by SKU or name and quantity.</p>
+          <h1>Welcome to the Webshop</h1>
+          <p>Quick order for logged-in users — add multiple products fast.</p>
         </div>
       </section>
 
@@ -53,7 +53,7 @@ export default function ShopPage() {
               <div className="product-row" key={i}>
                 <input
                   className="product-search"
-                  placeholder={`Enter Product ${i + 1}...`}
+                  placeholder={`Enter product ${i + 1}...`}
                   value={r.query}
                   onChange={(e) => updateRow(i, 'query', e.target.value)}
                 />
@@ -78,7 +78,7 @@ export default function ShopPage() {
         </div>
 
         <aside className="product-image">
-          <div className="image-box">Promotional image or product</div>
+          <div className="image-box">Product image or promotional graphic</div>
         </aside>
       </section>
     </main>
