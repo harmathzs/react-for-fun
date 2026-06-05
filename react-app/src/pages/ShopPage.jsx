@@ -78,6 +78,7 @@ export default function ShopPage() {
           <div className="quick-order-actions">
             <a className="link-add" role="button" onClick={addRow}>+ Add Product</a>
             <div className="addcart-wrap">
+              <p>&nbsp;</p>
               <LoadingButton className="btn-primary" loading={addingToCart} onClick={addToCart}>Add to cart</LoadingButton>
             </div>
           </div>
