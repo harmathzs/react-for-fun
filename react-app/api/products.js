@@ -4,22 +4,29 @@ export default async function handler(req, res) {
   try {
     const session = await ensureSalesforceSession(req, res)
 
-    const soql = `SELECT Id, Name, ProductCode, Family, Description, IsActive, (SELECT Id, UnitPrice, Pricebook2Id, IsActive FROM PricebookEntries WHERE IsActive = true ORDER BY CreatedDate DESC LIMIT 1) FROM Product2 WHERE IsActive = true ORDER BY Name LIMIT 500`
+    // Query the Standard Price Book and its PricebookEntries to reliably get prices
+    const pbSoql = `SELECT CreatedDate, Name, (SELECT Id, UnitPrice, Product2Id, ProductCode, Product2.Name, Product2.StockKeepingUnit, Product2.Family, Product2.Description FROM PricebookEntries LIMIT 500) FROM Pricebook2 WHERE Name='Standard Price Book' LIMIT 1`
 
-    const records = await querySalesforce(session, soql)
+    const pbRecords = await querySalesforce(session, pbSoql)
 
-    const products = records.map((r) => ({
-      id: r.Id,
-      name: r.Name,
-      code: r.ProductCode,
-      family: r.Family,
-      description: r.Description,
-      pricebookEntry: (r.PricebookEntries && r.PricebookEntries.length) ? {
-        id: r.PricebookEntries[0].Id,
-        unitPrice: r.PricebookEntries[0].UnitPrice,
-        pricebookId: r.PricebookEntries[0].Pricebook2Id
-      } : null
-    }))
+    const products = []
+    if (pbRecords && pbRecords.length > 0) {
+      const entries = pbRecords[0].PricebookEntries || []
+      for (const e of entries) {
+        products.push({
+          id: e.Product2Id || e.Id,
+          name: (e.Product2 && e.Product2.Name) || e.Product2Name || null,
+          code: e.Product2 ? (e.Product2.StockKeepingUnit || e.ProductCode) : e.ProductCode,
+          family: e.Product2 ? e.Product2.Family : null,
+          description: e.Product2 ? e.Product2.Description : null,
+          pricebookEntry: {
+            id: e.Id,
+            unitPrice: e.UnitPrice,
+            pricebookId: pbRecords[0].Id
+          }
+        })
+      }
+    }
 
     res.setHeader('Content-Type', 'application/json')
     res.status(200).send(JSON.stringify({ ok: true, products }))
