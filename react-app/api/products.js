@@ -11,18 +11,21 @@ export default async function handler(req, res) {
 
     const products = []
     if (pbRecords && pbRecords.length > 0) {
-      const entries = pbRecords[0].PricebookEntries || []
+      // Salesforce returns subquery results under the nested `records` property.
+      const pb = pbRecords[0]
+      const entries = (pb.PricebookEntries && pb.PricebookEntries.records) || pb.PricebookEntries || []
       for (const e of entries) {
+        const product2 = e.Product2 || {}
         products.push({
-          id: e.Product2Id || e.Id,
-          name: (e.Product2 && e.Product2.Name) || e.Product2Name || null,
-          code: e.Product2 ? (e.Product2.StockKeepingUnit || e.ProductCode) : e.ProductCode,
-          family: e.Product2 ? e.Product2.Family : null,
-          description: e.Product2 ? e.Product2.Description : null,
+          id: product2.Id || e.Product2Id || e.Id,
+          name: product2.Name || e.Product2Name || null,
+          code: product2.StockKeepingUnit || e.ProductCode || null,
+          family: product2.Family || null,
+          description: product2.Description || null,
           pricebookEntry: {
             id: e.Id,
             unitPrice: e.UnitPrice,
-            pricebookId: pbRecords[0].Id
+            pricebookId: pb.Id
           }
         })
       }
