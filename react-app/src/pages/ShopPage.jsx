@@ -4,6 +4,7 @@ import ComboBox from '../components/ComboBox'
 import { useCart } from '../contexts/CartContext'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { useNavigate } from 'react-router-dom'
 
 export default function ShopPage() {
   const [rows, setRows] = useState([
@@ -17,6 +18,7 @@ export default function ShopPage() {
   const [addingToCart, setAddingToCart] = useState(false)
   const [products, setProducts] = useState([])
   const cart = useCart()
+  const navigate = useNavigate()
 
   function updateRow(i, key, value) {
     const copy = rows.slice()
@@ -48,7 +50,12 @@ export default function ShopPage() {
       if (!prod) continue
       cart.addItem(prod, Math.max(1, Number(r.qty) || 1))
       added += 1
-      toast.success(`${r.qty} × ${prod.name} added to cart`)
+      toast.success((
+        <div style={{display:'flex', alignItems:'center', gap:12}}>
+          <div>{r.qty} × {prod.name} added to cart</div>
+          <button onClick={() => navigate('/cart')} style={{background:'#0b5ed7', color:'#fff', border:'none', padding:'6px 10px', borderRadius:6}}>View Cart</button>
+        </div>
+      ))
     }
     setTimeout(() => {
       setAddingToCart(false)
