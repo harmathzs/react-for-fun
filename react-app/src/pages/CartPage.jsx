@@ -8,11 +8,22 @@ export default function CartPage() {
 
   async function handleCheckout() {
     try {
+      // include session info (leadId or webshopUserId) when available
+      let session = null
+      try {
+        const sr = await fetch('/api/session', { credentials: 'include' })
+        session = await sr.json()
+      } catch {}
+
       const payload = {
         traceId: Math.random().toString(36).slice(2,10),
         externalOrderId: `ext_${Date.now()}`,
-        orderProducts: cart.items.map(it => ({ productId: it.product.id, quantity: it.qty, unitPrice: it.product.pricebookEntry?.unitPrice }))
+        orderProducts: cart.items.map(it => ({ productId: it.product.id, quantity: it.qty, unitPrice: it.product.pricebookEntry?.unitPrice })),
+        pricebookName: (session && session.pricebookName) ? session.pricebookName : 'Standard Price Book'
       }
+
+      if (session?.user?.leadId) payload.leadId = session.user.leadId
+      else if (session?.user?.webshopUserId) payload.webshopUserId = session.user.webshopUserId
 
       const r = await fetch('/api/checkout', {
         method: 'POST',
