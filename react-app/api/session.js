@@ -6,7 +6,7 @@ import {
 } from './_lib/auth-utils.js'
 import { ensureSalesforceSession, querySalesforce } from './_lib/salesforce.js'
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (!onlyMethods(req, res, ['GET'])) return
 
   const session = getCookieObject(req, COOKIE_KEYS.SITE_SESSION)
