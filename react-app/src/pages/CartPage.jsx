@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useCart } from '../contexts/CartContext'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 export default function CartPage() {
   const cart = useCart()
@@ -35,10 +37,10 @@ export default function CartPage() {
       if (!r.ok) throw new Error(data?.message || 'checkout failed')
       // clear cart on success
       cart.clearCart()
-      alert('Checkout processed (see server logs). Response: ' + JSON.stringify(data.apex || data))
+      toast.success('Checkout processed — server response logged')
     } catch (e) {
       console.error(e)
-      alert('Checkout failed: ' + (e.message || e))
+      toast.error('Checkout failed: ' + (e.message || e))
     }
   }
 

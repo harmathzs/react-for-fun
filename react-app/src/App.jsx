@@ -9,6 +9,8 @@ import LoginPage from './pages/LoginPage.jsx'
 import ProductsPage from './pages/ProductsPage.jsx'
 import CartPage from './pages/CartPage.jsx'
 import './App.css'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import Footer from './components/Footer'
 
 export default function App() {
@@ -91,6 +93,7 @@ export default function App() {
         user={sessionState.user}
         onLogout={handleLogout}
       />
+      <ToastContainer position="top-right" autoClose={4000} />
       <main className="main-content">
         {sessionState.loading ? (
           <section className="page-card auth-card auth-card-sm">

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import ProductCard from '../components/ProductCard'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([])
@@ -40,7 +42,7 @@ export default function ProductsPage() {
 
   function handleAdd(product, qty) {
     // TODO: call cart API
-    alert(`Add ${qty} × ${product.name} to cart (placeholder)`)
+    toast.info(`Add ${qty} × ${product.name} to cart (placeholder)`)
   }
 
   return (
