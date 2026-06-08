@@ -1,21 +1,29 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import { useCart } from '../contexts/CartContext'
+import LoadingButton from '../components/LoadingButton'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
 export default function CartPage() {
   const cart = useCart()
+  const [isCheckingOut, setIsCheckingOut] = useState(false)
 
   if (!cart) return null
 
   async function handleCheckout() {
+    if (isCheckingOut) return
+
+    setIsCheckingOut(true)
+
     try {
       // include session info (leadId or webshopUserId) when available
       let session = null
       try {
         const sr = await fetch('/api/session', { credentials: 'include' })
         session = await sr.json()
-      } catch {}
+      } catch {
+        session = null
+      }
 
       const payload = {
         traceId: Math.random().toString(36).slice(2,10),
@@ -41,6 +49,8 @@ export default function CartPage() {
     } catch (e) {
       console.error(e)
       toast.error('Checkout failed: ' + (e.message || e))
+    } finally {
+      setIsCheckingOut(false)
     }
   }
 
@@ -67,7 +77,9 @@ export default function CartPage() {
             <div>Subtotal: {cart.subtotal} Ft</div>
             <div>Shipping: 0 Ft</div>
             <div><strong>Total: {cart.subtotal} Ft</strong></div>
-            <button className="btn-primary" onClick={handleCheckout}>Proceed to Checkout</button>
+            <LoadingButton className="btn-primary" onClick={handleCheckout} isLoading={isCheckingOut}>
+              Proceed to Checkout
+            </LoadingButton>
           </div>
         </div>
       )}
