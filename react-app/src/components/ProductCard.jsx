@@ -1,14 +1,24 @@
 import React, { useState } from 'react'
 import { useCart } from '../contexts/CartContext'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import { useNavigate } from 'react-router-dom'
 
 export default function ProductCard({ product, authenticated, onAdd }) {
   const [qty, setQty] = useState(1)
   const cart = useCart()
+  const navigate = useNavigate()
 
   function handleAdd() {
     const q = Math.max(1, Number(qty) || 1)
     if (cart && cart.addItem) {
       cart.addItem(product, q)
+      toast.success(
+        (<div style={{display:'flex', alignItems:'center', gap:12}}>
+          <div>{q} × {product.name} added to cart</div>
+          <button onClick={() => navigate('/cart')} style={{background:'#0b5ed7', color:'#fff', border:'none', padding:'6px 10px', borderRadius:6}}>View Cart</button>
+        </div>)
+      )
       return
     }
     if (onAdd) onAdd(product, q)
