@@ -27,7 +27,9 @@ export default function ShopPage() {
   }
 
   function clearRow(i) {
-    updateRow(i, 'query', '')
+    const copy = rows.slice()
+    copy.splice(i, 1)
+    setRows(copy.length ? copy : [{ query: '', qty: 1 }])
   }
 
   function addRow() {
