@@ -8,6 +8,7 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true)
   const [familyFilter, setFamilyFilter] = useState('')
   const [sort, setSort] = useState('name')
+  const [search, setSearch] = useState('')
   const [authenticated, setAuthenticated] = useState(false)
 
   useEffect(() => {
@@ -33,6 +34,11 @@ export default function ProductsPage() {
 
   function filtered() {
     let list = products.slice()
+    // apply search when at least 3 chars
+    if (search && search.trim().length >= 3) {
+      const q = search.trim().toLowerCase()
+      list = list.filter(p => (p.name || '').toLowerCase().includes(q))
+    }
     if (familyFilter) list = list.filter(p => p.family === familyFilter)
     if (sort === 'price-asc') list.sort((a,b)=> (a.pricebookEntry?.unitPrice||0)-(b.pricebookEntry?.unitPrice||0))
     else if (sort === 'price-desc') list.sort((a,b)=> (b.pricebookEntry?.unitPrice||0)-(a.pricebookEntry?.unitPrice||0))
@@ -49,6 +55,10 @@ export default function ProductsPage() {
     <section className="page-card products-page">
       <h1>Products</h1>
       <p>Browse active products from Salesforce. Prices come from the active PricebookEntry.</p>
+
+      <div style={{margin:'0.6rem 0'}}>
+        <input placeholder="Search products (min 3 chars)" value={search} onChange={e=>setSearch(e.target.value)} style={{padding:'0.5rem', width:'100%', maxWidth:420, borderRadius:8, border:'1px solid #cbd5e1'}} />
+      </div>
 
       <div className="products-grid">
         <div className="filters-row">
