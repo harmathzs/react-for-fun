@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     const session = await ensureSalesforceSession(req, res)
 
     // Query the Standard Price Book and its PricebookEntries to reliably get prices
-    const pbSoql = `SELECT CreatedDate, Name, (SELECT Id, UnitPrice, Product2Id, ProductCode, Product2.Name, Product2.StockKeepingUnit, Product2.Family, Product2.Description FROM PricebookEntries LIMIT 500) FROM Pricebook2 WHERE Name='Standard Price Book' LIMIT 1`
+    const pbSoql = `SELECT Id, CreatedDate, Name, (SELECT Id, UnitPrice, Product2Id, ProductCode, Product2.Name, Product2.StockKeepingUnit, Product2.Family, Product2.Description FROM PricebookEntries LIMIT 500) FROM Pricebook2 WHERE Name='Standard Price Book' LIMIT 1`
 
     const pbRecords = await querySalesforce(session, pbSoql)
 
