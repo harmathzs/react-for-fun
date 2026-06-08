@@ -8,7 +8,6 @@ export default function Navbar({ authenticated, user, onLogout }) {
   const location = useLocation()
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const navigate = useNavigate()
 
   const displayName = user
     ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || user.email
