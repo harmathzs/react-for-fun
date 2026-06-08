@@ -1,5 +1,9 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import LoadingButton from '../components/LoadingButton'
+import ComboBox from '../components/ComboBox'
+import { useCart } from '../contexts/CartContext'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 export default function ShopPage() {
   const [rows, setRows] = useState([
@@ -11,6 +15,8 @@ export default function ShopPage() {
   ])
   const [adding, setAdding] = useState(false)
   const [addingToCart, setAddingToCart] = useState(false)
+  const [products, setProducts] = useState([])
+  const cart = useCart()
 
   function updateRow(i, key, value) {
     const copy = rows.slice()
@@ -32,9 +38,36 @@ export default function ShopPage() {
 
   function addToCart() {
     setAddingToCart(true)
-    // placeholder: integrate with cart API
-    setTimeout(() => setAddingToCart(false), 500)
+    // map row queries to product objects by name
+    let added = 0
+    for (const r of rows) {
+      const name = (r.query || '').trim()
+      if (!name) continue
+      const lower = name.toLowerCase()
+      const prod = products.find(p => (p.name || '').toLowerCase().includes(lower))
+      if (!prod) continue
+      cart.addItem(prod, Math.max(1, Number(r.qty) || 1))
+      added += 1
+      toast.success(`${r.qty} × ${prod.name} added to cart`)
+    }
+    setTimeout(() => {
+      setAddingToCart(false)
+      if (added === 0) toast.info('No matching products found to add')
+    }, 250)
   }
+
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const res = await fetch('/api/products')
+        const j = await res.json()
+        if (!mounted) return
+        setProducts(j.products || [])
+      } catch (e) {}
+    })()
+    return () => { mounted = false }
+  }, [])
 
   return (
     <main className="page-card shop-card">
@@ -55,11 +88,10 @@ export default function ShopPage() {
           <div className="product-rows">
             {rows.map((r, i) => (
               <div className="product-row" key={i}>
-                <input
-                  className="product-search"
-                  placeholder={`Enter Product ${i + 1}...`}
-                  value={r.query}
-                  onChange={(e) => updateRow(i, 'query', e.target.value)}
+                <ComboBox
+                  items={products.map(p => p.name)}
+                  placeholder={`Product ${i + 1}...`}
+                  onSelect={(val) => updateRow(i, 'query', val)}
                 />
                 <div className="qty-wrap">
                   <input
