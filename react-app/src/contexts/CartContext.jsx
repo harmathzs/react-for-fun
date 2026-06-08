@@ -20,6 +20,24 @@ export function CartProvider({ children }) {
 
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)) } catch {}
+    // Sync to server when authenticated
+    ;(async () => {
+      try {
+        const resp = await fetch('/api/session', { credentials: 'include' })
+        const p = await resp.json()
+        if (p?.authenticated) {
+          // send items to server (upsert)
+          await fetch('/api/cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ items })
+          })
+        }
+      } catch (e) {
+        // ignore sync failures
+      }
+    })()
   }, [items])
 
   function addItem(product, qty = 1) {
