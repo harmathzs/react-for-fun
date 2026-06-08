@@ -8,6 +8,7 @@ export default function Navbar({ authenticated, user, onLogout }) {
   const location = useLocation()
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const navigate = useNavigate()
 
   const displayName = user
     ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || user.email
@@ -74,7 +75,17 @@ export default function Navbar({ authenticated, user, onLogout }) {
               <input
                 type="search"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setSearchQuery(v)
+                  // drive products filter by query param when >=3 chars
+                  if (v && v.trim().length >= 3) {
+                    navigate(`/products?q=${encodeURIComponent(v.trim())}`)
+                  } else {
+                    // clear query
+                    navigate('/products')
+                  }
+                }}
                 placeholder="Search products..."
                 aria-label="Search products"
               />

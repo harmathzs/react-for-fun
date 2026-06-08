@@ -2,13 +2,16 @@ import React, { useEffect, useState } from 'react'
 import ProductCard from '../components/ProductCard'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { useLocation } from 'react-router-dom'
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [familyFilter, setFamilyFilter] = useState('')
   const [sort, setSort] = useState('name')
-  const [search, setSearch] = useState('')
+  const location = useLocation()
+  const qParams = new URLSearchParams(location.search)
+  const search = qParams.get('q') || ''
   const [authenticated, setAuthenticated] = useState(false)
 
   useEffect(() => {
@@ -34,7 +37,7 @@ export default function ProductsPage() {
 
   function filtered() {
     let list = products.slice()
-    // apply search when at least 3 chars
+    // apply search when at least 3 chars (driven by navbar query param)
     if (search && search.trim().length >= 3) {
       const q = search.trim().toLowerCase()
       list = list.filter(p => (p.name || '').toLowerCase().includes(q))
@@ -56,9 +59,7 @@ export default function ProductsPage() {
       <h1>Products</h1>
       <p>Browse active products from Salesforce. Prices come from the active PricebookEntry.</p>
 
-      <div style={{margin:'0.6rem 0'}}>
-        <input placeholder="Search products (min 3 chars)" value={search} onChange={e=>setSearch(e.target.value)} style={{padding:'0.5rem', width:'100%', maxWidth:420, borderRadius:8, border:'1px solid #cbd5e1'}} />
-      </div>
+      {/* search is handled by the navbar; products page reads `q` query param */}
 
       <div className="products-grid">
         <div className="filters-row">
