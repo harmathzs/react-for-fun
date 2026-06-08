@@ -248,6 +248,12 @@
   padding: 2.5rem 1.5rem;
 }
 
+/* Use square boxes for standard unordered list bullets (keep components that reset list-style intact) */
+ul { 
+  list-style-type: square;
+  padding-left: 1.15rem;
+}
+
 /* ── Page card ──────────────────────────────── */
 .page-card {
   background: #ffffff;
