@@ -728,7 +728,7 @@ ul {
 .combobox-input { display:flex; gap:8px; align-items:center }
 .combobox-input input { flex:1; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1; text-align:left }
 .combobox-trigger { background:#eef2ff; border:none; padding:0 8px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center }
-.combobox-list { position:absolute; left:0; right:0; margin-top:6px; background:#fff; border:1px solid #e6eef8; border-radius:8px; max-height:220px; overflow:auto; z-index:50; box-shadow:0 8px 24px rgba(6,21,41,0.06) }
+.combobox-list { position:absolute; left:0; right:0; margin-top:6px; background:#fff; border:1px solid #e6eef8; border-radius:8px; max-height:220px; overflow:auto; z-index:50; box-shadow:0 8px 24px rgba(6,21,41,0.06); list-style-type: square; padding-left:1.25rem }
 .combobox-item { padding:0.6rem 0.9rem; cursor:pointer; text-align:left }
 .combobox-item.highlight { background:#f1f5ff }
 .combobox-empty { padding:0.6rem 0.9rem; color:#64748b }

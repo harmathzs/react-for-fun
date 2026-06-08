@@ -55,7 +55,7 @@ export default function ComboBox({ items = [], placeholder = 'Pick...', onSelect
           aria-haspopup="listbox"
           aria-expanded={open}
         />
-        <button type="button" className="combobox-trigger" aria-label="Toggle" onClick={() => setOpen(o => !o)}>▢</button>
+        <button type="button" className="combobox-trigger" aria-label="Toggle" onClick={() => setOpen(o => !o)}>▾</button>
       </div>
 
       {open && (
