@@ -734,6 +734,9 @@ ul {
   font-size: 0.95rem;
   width: 36px;
   height: 36px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .icon-cart:active { transform: translateY(1px); }
