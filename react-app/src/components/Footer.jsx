@@ -44,12 +44,9 @@ export default function Footer() {
             <a href="#" aria-label="YouTube">YouTube</a>
             <a href="#" aria-label="Instagram">Instagram</a>
           </div>
-        </div>
-      </div>
-
-      <div className="footer-map">
-        <div className="map-placeholder">
-          <div className="map-marker">📍 Kiskunfélegyháza, Hungary</div>
+          <div className="map-placeholder">
+            <div className="map-marker">📍 Kiskunfélegyháza, Hungary</div>
+          </div>
         </div>
       </div>
 

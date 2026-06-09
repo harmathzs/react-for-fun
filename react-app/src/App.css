@@ -531,12 +531,6 @@ ul {
   color: #334155;
 }
 
-.site-footer .footer-map {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1.5rem 2rem;
-}
-
 .map-placeholder {
   background: #ffffff;
   border: 1px solid #e6eef9;
