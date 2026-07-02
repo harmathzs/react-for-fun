@@ -8,10 +8,12 @@ export default async function handler(req, res) {
     // Verify authenticated session
     const session = getCookieObject(req, COOKIE_KEYS.SITE_SESSION)
     if (!session || !session.webshopUserId) {
+      console.warn('[deleteAccount] Unauthorized deletion attempt: no valid session')
       return res.status(401).json({ ok: false, message: 'Not authenticated' })
     }
 
     const webshopUserId = session.webshopUserId
+    console.log(`[deleteAccount] Starting deletion for webshopUserId: ${webshopUserId}`)
 
     // Get Salesforce session
     const sf = await ensureSalesforceSession(req, res)
@@ -21,14 +23,16 @@ export default async function handler(req, res) {
     await callSalesforceApi(sf, deleteUrl, {
       method: 'DELETE'
     })
+    console.log(`[deleteAccount] Webshop_User__c record deleted successfully: ${webshopUserId}`)
 
     // Clear session cookies
     clearCookie(res, COOKIE_KEYS.SITE_SESSION)
     clearCookie(res, COOKIE_KEYS.SF_SESSION_TOKEN)
+    console.log(`[deleteAccount] Session cookies cleared for webshopUserId: ${webshopUserId}`)
 
     return res.status(200).json({ ok: true, message: 'Account deleted' })
   } catch (err) {
-    console.error('deleteAccount error', err?.message || err)
+    console.warn(`[deleteAccount] Error during account deletion:`, err?.message || err)
     return res.status(500).json({ ok: false, message: err?.message || 'Deletion failed' })
   }
 }
