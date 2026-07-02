@@ -8,6 +8,7 @@ import RegisterPage from './pages/RegisterPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import ProductsPage from './pages/ProductsPage.jsx'
 import CartPage from './pages/CartPage.jsx'
+import AccountPage from './pages/AccountPage.jsx'
 import './App.css'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -128,6 +129,14 @@ export default function App() {
           <Route path="/thanks" element={<ThanksPage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route
+            path="/account"
+            element={
+              sessionState.authenticated
+                ? <AccountPage user={sessionState.user} onAuthChange={loadSession} />
+                : <Navigate to="/login" replace />
+            }
+          />
         </Routes>
         )}
       </main>
