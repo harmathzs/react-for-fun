@@ -28,6 +28,7 @@ export default async function handler(req, res) {
     // Clear session cookies
     clearCookieObject(res, COOKIE_KEYS.SITE_SESSION)
     clearCookieObject(res, COOKIE_KEYS.SALESFORCE_SESSION)
+    clearCookieObject(res, COOKIE_KEYS.VERIFIED_USER)
     console.log(`[deleteAccount] Session cookies cleared for webshopUserId: ${webshopUserId}`)
 
     return res.status(200).json({ ok: true, message: 'Account deleted' })
