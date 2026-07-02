@@ -109,6 +109,7 @@ export default async function handler(req, res) {
         res,
         COOKIE_KEYS.SITE_SESSION,
         {
+            webshopUserId: verifiedUser.id,
             email: verifiedUser.email,
             firstName: verifiedUser.firstName,
             lastName: verifiedUser.lastName,
