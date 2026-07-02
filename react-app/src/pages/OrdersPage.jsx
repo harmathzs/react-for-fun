@@ -170,7 +170,7 @@ export default function OrdersPage() {
                             {order.items.map((item) => (
                               <tr key={item.Id} style={{ borderBottom: '1px solid #f0f0f0' }}>
                                 <td style={{ padding: '0.5rem' }}>
-                                  {item['Product2.Name'] || item.Product2Id || 'Product'}
+                                  {item.productName || 'Product'}
                                 </td>
                                 <td style={{ textAlign: 'center', padding: '0.5rem' }}>
                                   {item.Quantity}

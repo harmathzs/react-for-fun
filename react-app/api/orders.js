@@ -77,14 +77,20 @@ export default async function handler(req, res) {
             ORDER BY CreatedDate ASC`
           )
 
-          const subtotal = (items || []).reduce(
+          // Properly extract product names from the response
+          const processedItems = (items || []).map(item => ({
+            ...item,
+            productName: item.Product2?.Name || item['Product2.Name'] || 'Product'
+          }))
+
+          const subtotal = (processedItems || []).reduce(
             (sum, item) => sum + ((item.UnitPrice || 0) * (item.Quantity || 0)),
             0
           )
 
           return {
             ...order,
-            items: items || [],
+            items: processedItems || [],
             subtotal,
             formattedDate: new Date(order.CreatedDate).toLocaleDateString('en-US', {
               year: 'numeric',
