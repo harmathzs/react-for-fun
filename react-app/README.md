@@ -30,27 +30,42 @@ react-app/
 ├── api/                     # Vercel serverless functions (Node.js ESM)
 │   ├── session.js           # GET  — reads SITE_SESSION cookie, returns auth state
 │   ├── register.js          # POST — register new user, create Webshop_User__c
-│   ├── verify.js            # POST — verify email code, activate user
+│   ├── verify.js            # POST — verify email code, activate user, include webshopUserId in session
 │   ├── login.js             # POST — authenticate, create Webshop_Session__c
 │   ├── logout.js            # POST — revoke session, clear cookies
+│   ├── deleteAccount.js     # DELETE — permanently delete user's Webshop_User__c and clear all cookies
+│   ├── checkout.js          # POST — convert Lead to Account/Contact/Opportunity, create Order/OrderItems
+│   ├── orders.js            # GET  — fetch authenticated user's orders with product details
 │   ├── salesforce-auth.js   # GET/POST/DELETE — Salesforce session management
 │   └── _lib/
 │       ├── auth-utils.js    # COOKIE_KEYS, hashPassword, createShortCode, response helpers
 │       ├── cookies.js       # AES-256-GCM encrypt/decrypt, parse/set/clear cookies
-│       └── salesforce.js    # fetchSalesforceToken, ensureSalesforceSession, SOQL/REST helpers
+│       └── salesforce.js    # fetchSalesforceToken, ensureSalesforceSession, SOQL/REST/Apex helpers
 ├── src/
 │   ├── main.jsx             # Entry point, mounts BrowserRouter + App
 │   ├── App.jsx              # Root layout: session state, route guards, Navbar, Footer
 │   ├── App.css              # All component and page styles
 │   ├── index.css            # Global reset and base styles (light theme)
 │   ├── components/
-│   │   └── Navbar.jsx       # Auth-aware sticky navigation with profile dropdown
+│   │   ├── Navbar.jsx       # Auth-aware sticky navigation with profile dropdown
+│   │   └── Footer.jsx       # Footer with links to info pages and account
 │   └── pages/
 │       ├── InterestPage.jsx # / — Web-to-Lead form (unauthenticated landing)
 │       ├── ThanksPage.jsx   # /thanks — Post-lead-submission confirmation
 │       ├── RegisterPage.jsx # /register — Registration + email verification flow
 │       ├── LoginPage.jsx    # /login — Login form
-│       └── ShopPage.jsx     # /shop — Authenticated shop (content pending)
+│       ├── ShopPage.jsx     # /shop — Authenticated shop
+│       ├── ProductsPage.jsx # /products — Product catalog (searchable)
+│       ├── CartPage.jsx     # /cart — Shopping cart
+│       ├── AccountPage.jsx  # /account — User profile & account deletion
+│       ├── OrdersPage.jsx   # /orders — Order history with expandable accordion UI
+│       ├── AboutPage.jsx    # /about-us — Company info
+│       ├── CareersPage.jsx  # /careers — No open positions
+│       ├── OrderStatusPage.jsx  # /order-status — How to check order status
+│       ├── ShippingPage.jsx # /shipping — Shipping methods & delivery info
+│       ├── FAQPage.jsx      # /faq — Expandable Q&A
+│       ├── ContactPage.jsx  # /contact-us — Contact form + direct info
+│       └── AccessibilityPage.jsx # /accessibility — WCAG compliance info
 ```
 
 ---
@@ -62,19 +77,30 @@ react-app/
 `App.jsx` fetches `/api/session` on mount to determine auth state. While loading it shows a spinner card. Once resolved it renders route guards:
 
 ```
-┌──────────────────────────────────────────────┐
-│  Navbar (sticky, auth-aware)                 │
-├──────────────────────────────────────────────┤
-│  <main>                                      │
-│    / → InterestPage (unauthed) | → /shop     │
-│    /shop → ShopPage (authed)   | → /         │
-│    /login → LoginPage          | → /shop     │
-│    /register → RegisterPage    | → /shop     │
-│    /thanks → ThanksPage                      │
-│  </main>                                     │
-├──────────────────────────────────────────────┤
-│  Footer (© year React 4 fun)                 │
-└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  Navbar (sticky, auth-aware)                                 │
+├──────────────────────────────────────────────────────────────┤
+│  <main>                                                      │
+│    /                → InterestPage (unauthed) | → /shop      │
+│    /shop           → ShopPage (authed)       | → /           │
+│    /login          → LoginPage               | → /shop       │
+│    /register       → RegisterPage            | → /shop       │
+│    /thanks         → ThanksPage                              │
+│    /products       → ProductsPage (all users)                │
+│    /cart           → CartPage (all users)                    │
+│    /account        → AccountPage (authed)    | → /login      │
+│    /orders         → OrdersPage (authed)     | → /login      │
+│    /about-us       → AboutPage (all users)                   │
+│    /careers        → CareersPage (all users)                 │
+│    /order-status   → OrderStatusPage (all users)             │
+│    /shipping       → ShippingPage (all users)                │
+│    /faq            → FAQPage (all users)                     │
+│    /contact-us     → ContactPage (all users)                 │
+│    /accessibility  → AccessibilityPage (all users)           │
+│  </main>                                                     │
+├──────────────────────────────────────────────────────────────┤
+│  Footer (links to info pages + account links)                │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 Session state (`loading`, `authenticated`, `user`) lives in `App.jsx`. `loadSession()` re-fetches `/api/session` after login, register/verify, or logout. `handleLogout()` calls `POST /api/logout`, then `loadSession()`, then navigates to `/`.
@@ -137,7 +163,56 @@ Email + password form. Redirects to `/shop` if already authenticated. On success
 
 ### Shop Page (`src/pages/ShopPage.jsx`) — route `/shop`
 
-Authenticated-only route. Redirects to `/` if not authenticated. **Content not yet built out.**
+Authenticated-only route. Redirects to `/` if not authenticated. Product listing and shopping interface.
+
+### Products Page (`src/pages/ProductsPage.jsx`) — route `/products`
+
+Product catalog accessible to all users. Supports search filtering via query params (`?q=searchterm`).
+
+### Cart Page (`src/pages/CartPage.jsx`) — route `/cart`
+
+Shopping cart for purchases. Checkout triggers Lead-to-Account conversion and Order creation.
+
+### Account Page (`src/pages/AccountPage.jsx`) — route `/account`
+
+Authenticated-only route. Displays user profile information and provides account deletion capability.
+
+### Orders Page (`src/pages/OrdersPage.jsx`) — route `/orders`
+
+Authenticated-only route. Displays user's order history in expandable accordion UI. Each accordion shows:
+- Order number, date, time, status (color-coded: Green=Activated, Blue=Draft, Red=Cancelled)
+- Expandable details: order ID, external ID, status, products table (Name, Qty, Unit Price, Subtotal), order total
+- Empty state for users with no orders yet
+
+### Static Information Pages
+
+#### About Page (`src/pages/AboutPage.jsx`) — route `/about-us`
+
+Company mission, values, and philosophy.
+
+#### Careers Page (`src/pages/CareersPage.jsx`) — route `/careers`
+
+Currently no open positions, but invites future applicants to introduce themselves.
+
+#### Order Status Page (`src/pages/OrderStatusPage.jsx`) — route `/order-status`
+
+Guides users on how to check order status in their account. Explains status types (Draft, Activated, Cancelled).
+
+#### Shipping Page (`src/pages/ShippingPage.jsx`) — route `/shipping`
+
+Shipping methods (Standard, Express, Local Pickup) with delivery times and costs. International shipping info.
+
+#### FAQ Page (`src/pages/FAQPage.jsx`) — route `/faq`
+
+Expandable accordion with 8 common Q&A pairs covering refunds, account creation, order changes, payments, delivery, data safety, loyalty, and promo codes.
+
+#### Contact Page (`src/pages/ContactPage.jsx`) — route `/contact-us`
+
+Contact form with name, email, subject, message fields. Displays direct contact info (email, phone, address).
+
+#### Accessibility Page (`src/pages/AccessibilityPage.jsx`) — route `/accessibility`
+
+WCAG 2.1 Level AA compliance information. Lists keyboard navigation, screen reader support, contrast standards, zoom support, and accessibility features.
 
 ---
 
@@ -175,21 +250,24 @@ The access token is cached in an encrypted `wf_salesforce_session` HttpOnly cook
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `/api/session` | GET | Read `wf_site_session` cookie; return `{ authenticated, user }` |
-| `/api/register` | POST | Validate fields → Salesforce duplicate check → Lead/Contact lookup → create `Webshop_User__c` → set `wf_pending_registration` cookie |
-| `/api/verify` | POST | Validate code from body against `wf_pending_registration` cookie → update `Webshop_User__c` to Active → set `wf_site_session` + `wf_verified_user` cookies |
-| `/api/login` | POST | Query `Webshop_User__c` → validate status + hash → create `Webshop_Session__c` → set `wf_site_session` cookie |
-| `/api/logout` | POST | Set `Webshop_Session__c.Active__c = false`, `Revoked_At__c` → clear session cookies |
+| `/api/session` | GET | Read `SITE_SESSION` cookie; return `{ authenticated, user }` |
+| `/api/register` | POST | Validate fields → Salesforce duplicate check → query existing Lead and reset Email_Verified__c if already verified → create `Webshop_User__c` → send verification email → set `PENDING_REGISTRATION` cookie |
+| `/api/verify` | POST | Validate code from body against `PENDING_REGISTRATION` cookie → update `Webshop_User__c` to Active + set Email_Verified__c=true → set `SITE_SESSION` + `VERIFIED_USER` cookies |
+| `/api/login` | POST | Query `Webshop_User__c` → validate status + password hash → create `Webshop_Session__c` → set `SITE_SESSION` + `SALESFORCE_SESSION` cookies |
+| `/api/logout` | POST | Set `Webshop_Session__c.Active__c = false`, `Revoked_At__c` → clear all session cookies |
+| `/api/deleteAccount` | DELETE | Delete `Webshop_User__c` record → clear `SITE_SESSION`, `SALESFORCE_SESSION`, `VERIFIED_USER` cookies |
+| `/api/checkout` | POST | Extract Lead ID from `Webshop_User__c.Lead__c` → call Apex `/services/apexrest/webshop/checkout` → atomically convert Lead to Account/Contact/Opportunity, create Order + OrderItems → update `Webshop_User__c` with conversion results (Contact__c, Account__c, Opportunity__c, Converted__c=true) |
+| `/api/orders` | GET | Query `Webshop_User__c` from session → get Account__c → fetch all Orders → query OrderItems with nested Product2 data → return formatted order list with product names |
 | `/api/salesforce-auth` | GET/POST/DELETE | Salesforce session status / connect / clear |
 
 ### Cookie Inventory
 
 | Cookie | TTL | Contents |
 |---|---|---|
-| `wf_site_session` | 8 hours | `webshopUserId`, `email`, `firstName`, `lastName`, `company`, `loginAt`, `expiresAt` |
-| `wf_verified_user` | 30 days | email of verified user (local duplicate-check shortcut) |
-| `wf_pending_registration` | 30 minutes | `verificationCode` (hashed), `hashedPassword`, `webshopUserId`, `email`, `expiry` |
-| `wf_salesforce_session` | 1 hour | Salesforce `accessToken`, `instanceUrl`, `expiresAt` |
+| `SITE_SESSION` | 8 hours | `webshopUserId`, `email`, `firstName`, `lastName`, `company`, `loginAt`, `expiresAt` |
+| `VERIFIED_USER` | 30 days | email of verified user (local duplicate-check shortcut) |
+| `PENDING_REGISTRATION` | 30 minutes | `verificationCode` (hashed), `hashedPassword`, `webshopUserId`, `email`, `expiry` |
+| `SALESFORCE_SESSION` | 1 hour | Salesforce `accessToken`, `instanceUrl`, `expiresAt` |
 
 All cookies are AES-256-GCM encrypted, `HttpOnly`, `SameSite=Strict`.
 
@@ -254,14 +332,32 @@ Live URL: `https://react-for-fun.vercel.app`
 
 ---
 
+## Recently Completed
+
+| Feature | Status | Notes |
+|---|---|---|
+| Account deletion | ✅ | `/api/deleteAccount` endpoint clears all cookies and permanently removes user record |
+| Re-registration support | ✅ | Users can delete and re-register with same email; register.js resets Email_Verified__c on existing Lead |
+| Lead conversion at checkout | ✅ | Apex WebshopCheckout atomically converts Lead to Account/Contact/Opportunity on first checkout |
+| Repeat order support | ✅ | Apex checks if Lead already converted; reuses Account/Contact and creates new Opportunity for subsequent orders |
+| Order history page | ✅ | Orders page with expandable accordion UI, status badges, product details with correct names |
+| Static information pages | ✅ | About, Careers, Order Status, Shipping, FAQ, Contact, Accessibility pages fully implemented |
+| Footer navigation | ✅ | All footer links connect to static pages and authenticated account routes |
+| Session management in new registrations | ✅ | verify.js now includes webshopUserId in SITE_SESSION, enabling immediate account access |
+
 ## Pending / Not Yet Implemented
 
 | Feature | Notes |
 |---|---|
 | Email sending for verification | Code is returned in API response body in non-production only. Plan: Salesforce Apex email or external provider (Resend/SendGrid). When implemented, store hashed code + expiry on `Webshop_User__c` and validate against Salesforce instead of cookie. |
-| ShopPage content | Route and auth guard exist; page content not built out |
 | `Webshop_Session__c` cleanup | No Scheduled Flow/Apex job yet to expire old session records |
-| Lead conversion on basket fill | `Webshop_User__c` lookup fields (`Lead__c`, `Contact__c`, `Account__c`, `Opportunity__c`) are in place; conversion logic not yet implemented |
+| ShopPage product display | Route and auth guard exist; product content not fully implemented |
+| Inventory management | No inventory tracking on products yet |
+| Order cancellation | Users cannot cancel orders after creation |
+| Order refunds workflow | No refund process implemented |
+| Payment processing | Orders created in draft; no actual payment gateway integration |
+| Invoice download | Orders cannot be exported as PDF/invoice |
+| Reorder button | No quick-reorder functionality from Orders page |
 
 ---
 
