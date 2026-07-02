@@ -10,6 +10,13 @@ import ProductsPage from './pages/ProductsPage.jsx'
 import CartPage from './pages/CartPage.jsx'
 import AccountPage from './pages/AccountPage.jsx'
 import OrdersPage from './pages/OrdersPage.jsx'
+import AboutPage from './pages/AboutPage.jsx'
+import CareersPage from './pages/CareersPage.jsx'
+import OrderStatusPage from './pages/OrderStatusPage.jsx'
+import ShippingPage from './pages/ShippingPage.jsx'
+import FAQPage from './pages/FAQPage.jsx'
+import ContactPage from './pages/ContactPage.jsx'
+import AccessibilityPage from './pages/AccessibilityPage.jsx'
 import './App.css'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -146,6 +153,13 @@ export default function App() {
                 : <Navigate to="/login" replace />
             }
           />
+          <Route path="/about-us" element={<AboutPage />} />
+          <Route path="/careers" element={<CareersPage />} />
+          <Route path="/order-status" element={<OrderStatusPage />} />
+          <Route path="/shipping" element={<ShippingPage />} />
+          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/contact-us" element={<ContactPage />} />
+          <Route path="/accessibility" element={<AccessibilityPage />} />
         </Routes>
         )}
       </main>

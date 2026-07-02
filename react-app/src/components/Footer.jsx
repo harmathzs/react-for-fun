@@ -8,21 +8,21 @@ export default function Footer() {
         <div className="footer-col">
           <strong>Our Company</strong>
           <ul>
-            <li><a href="#">About us</a></li>
-            <li><a href="#">Our Stores</a></li>
+            <li><NavLink to="/about-us">About us</NavLink></li>
+            <li><NavLink to="/careers">Our Stores</NavLink></li>
             <li><a href="#">Our Blog</a></li>
-            <li><a href="#">Careers</a></li>
+            <li><NavLink to="/careers">Careers</NavLink></li>
           </ul>
         </div>
 
         <div className="footer-col">
           <strong>Get Help</strong>
           <ul>
-            <li><a href="#">Order Status</a></li>
-            <li><a href="#">Shipping & Delivery</a></li>
-            <li><a href="#">FAQ</a></li>
-            <li><a href="#">Contact Us</a></li>
-            <li><a href="#">Accessibility</a></li>
+            <li><NavLink to="/order-status">Order Status</NavLink></li>
+            <li><NavLink to="/shipping">Shipping & Delivery</NavLink></li>
+            <li><NavLink to="/faq">FAQ</NavLink></li>
+            <li><NavLink to="/contact-us">Contact Us</NavLink></li>
+            <li><NavLink to="/accessibility">Accessibility</NavLink></li>
           </ul>
         </div>
 
