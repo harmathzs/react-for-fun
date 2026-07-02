@@ -1,5 +1,5 @@
 import { COOKIE_KEYS, getCookieObject, onlyMethods, responseError, responseOk } from './_lib/auth-utils.js'
-import { ensureSalesforceSession, callSalesforceApi, querySalesforce } from './_lib/salesforce.js'
+import { ensureSalesforceSession, callSalesforceApi, querySalesforce, updateSalesforceRecord } from './_lib/salesforce.js'
 
 export default async function handler(req, res) {
   if (!onlyMethods(req, res, ['POST'])) return
@@ -116,6 +116,32 @@ export default async function handler(req, res) {
         traceId,
         apexError: apexResponse.message
       })
+    }
+
+    // Update Webshop_User__c with conversion results (non-fatal if fails)
+    if (webshopUserId && apexResponse) {
+      try {
+        await updateSalesforceRecord(sf, 'Webshop_User__c', webshopUserId, {
+          Contact__c: apexResponse.contactId || null,
+          Account__c: apexResponse.accountId || null,
+          Opportunity__c: apexResponse.opportunityId || null,
+          Converted__c: true
+        })
+        console.log('[checkout] webshop user updated with conversion results', {
+          traceId,
+          webshopUserId,
+          contactId: apexResponse.contactId,
+          accountId: apexResponse.accountId,
+          opportunityId: apexResponse.opportunityId
+        })
+      } catch (error) {
+        console.warn('[checkout] failed to update webshop user conversion fields', {
+          traceId,
+          webshopUserId,
+          message: error.message
+        })
+        // non-fatal: continue with response
+      }
     }
 
     console.log('[checkout] success', {
