@@ -16,7 +16,8 @@ import {
     ensureSalesforceSession,
     escapeSoql,
     querySalesforce,
-    sendVerificationEmailViaApex
+    sendVerificationEmailViaApex,
+    updateSalesforceRecord
 } from './_lib/salesforce.js'
 
 const PENDING_REGISTRATION_TTL_SECONDS = 60 * 30
@@ -101,7 +102,7 @@ export default async function handler(req, res) {
     try {
         const existingLeads = await querySalesforce(
             sf,
-            `SELECT Id, IsConverted, ConvertedContactId, ConvertedAccountId, ConvertedOpportunityId FROM Lead WHERE Email = '${escapeSoql(email)}' ORDER BY CreatedDate DESC LIMIT 1`
+            `SELECT Id, IsConverted, ConvertedContactId, ConvertedAccountId, ConvertedOpportunityId, Email_Verified__c, Email_Verified_At__c FROM Lead WHERE Email = '${escapeSoql(email)}' ORDER BY CreatedDate DESC LIMIT 1`
         )
 
         if (existingLeads.length > 0) {
@@ -110,6 +111,19 @@ export default async function handler(req, res) {
             contactId = lead.ConvertedContactId || null
             accountId = lead.ConvertedAccountId || null
             opportunityId = lead.ConvertedOpportunityId || null
+
+            // If lead was previously verified (e.g., from a deleted account re-registering),
+            // reset verification status for a fresh verification email.
+            if (lead.Email_Verified__c === true) {
+                await updateSalesforceRecord(sf, 'Lead', leadId, {
+                    Email_Verified__c: false,
+                    Email_Verified_At__c: null
+                })
+                console.log('[register] lead verification reset', {
+                    traceId,
+                    leadId
+                })
+            }
         }
 
         const existingContacts = await querySalesforce(
