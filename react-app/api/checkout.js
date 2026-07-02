@@ -1,15 +1,13 @@
-import { ensureSalesforceSession, callSalesforceApi } from './_lib/salesforce.js'
+import { COOKIE_KEYS, getCookieObject, onlyMethods, responseError, responseOk } from './_lib/auth-utils.js'
+import { ensureSalesforceSession, callSalesforceApi, querySalesforce } from './_lib/salesforce.js'
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST')
-    return res.status(405).json({ ok: false, message: 'Method not allowed' })
-  }
+  if (!onlyMethods(req, res, ['POST'])) return
+
+  const traceId = `chk_${Date.now()}_${Math.floor(Math.random() * 100000)}`
 
   try {
-    // ensure we have a server-side Salesforce session
-    const sf = await ensureSalesforceSession(req, res)
-
+    // Parse request body
     const body = await new Promise((resolve, reject) => {
       let data = ''
       req.on('data', chunk => data += chunk)
@@ -19,15 +17,132 @@ export default async function handler(req, res) {
 
     const payload = body ? JSON.parse(body) : {}
 
-    // forward to Apex REST endpoint that accepts the CheckoutRequest payload
-    const apexResponse = await callSalesforceApi(sf, '/services/apexrest/webshop/checkout', {
-      method: 'POST',
-      body: JSON.stringify(payload)
+    console.log('[checkout] request parsed', {
+      traceId,
+      externalOrderId: payload.externalOrderId,
+      hasLeadId: !!payload.leadId,
+      hasWebshopUserId: !!payload.webshopUserId,
+      productCount: payload.orderProducts?.length || 0
     })
 
-    return res.status(200).json({ ok: true, apex: apexResponse })
+    // Ensure we have a Salesforce session
+    let sf
+    try {
+      sf = await ensureSalesforceSession(req, res)
+    } catch (error) {
+      console.warn('[checkout] salesforce session failed', {
+        traceId,
+        message: error.message
+      })
+      return responseError(res, 502, 'Salesforce authentication failed', {
+        traceId,
+        reason: error.message
+      })
+    }
+
+    // Extract session and resolve leadId if needed
+    const session = getCookieObject(req, COOKIE_KEYS.SITE_SESSION)
+    let leadId = payload.leadId
+    let webshopUserId = payload.webshopUserId || session?.webshopUserId
+
+    // If we have webshopUserId but no leadId, resolve it from Webshop_User__c.Lead__c
+    if (webshopUserId && !leadId) {
+      try {
+        console.log('[checkout] resolving leadId from webshopUserId', {
+          traceId,
+          webshopUserId
+        })
+
+        const rows = await querySalesforce(
+          sf,
+          `SELECT Lead__c FROM Webshop_User__c WHERE Id = '${webshopUserId}' LIMIT 1`
+        )
+
+        if (rows && rows[0] && rows[0].Lead__c) {
+          leadId = rows[0].Lead__c
+          console.log('[checkout] leadId resolved from webshopUserId', {
+            traceId,
+            webshopUserId,
+            leadId
+          })
+        }
+      } catch (error) {
+        console.warn('[checkout] leadId resolution failed', {
+          traceId,
+          webshopUserId,
+          message: error.message
+        })
+      }
+    }
+
+    // Validate that we have at least leadId or webshopUserId
+    if (!leadId && !webshopUserId) {
+      console.warn('[checkout] missing leadId or webshopUserId', {
+        traceId
+      })
+      return responseError(res, 400, 'leadId or webshopUserId required for checkout', {
+        traceId
+      })
+    }
+
+    // Enrich payload with resolved values
+    const enrichedPayload = {
+      ...payload,
+      traceId,
+      ...(leadId ? { leadId } : {}),
+      ...(webshopUserId ? { webshopUserId } : {})
+    }
+
+    console.log('[checkout] calling apex endpoint', {
+      traceId,
+      leadId: enrichedPayload.leadId,
+      webshopUserId: enrichedPayload.webshopUserId,
+      externalOrderId: enrichedPayload.externalOrderId
+    })
+
+    // Forward to Apex REST endpoint
+    const apexResponse = await callSalesforceApi(sf, '/services/apexrest/webshop/checkout', {
+      method: 'POST',
+      body: JSON.stringify(enrichedPayload)
+    })
+
+    // Check Apex response
+    if (apexResponse && apexResponse.ok === false) {
+      console.warn('[checkout] apex returned business error', {
+        traceId,
+        message: apexResponse.message
+      })
+      return responseError(res, 400, apexResponse.message, {
+        traceId,
+        apexError: apexResponse.message
+      })
+    }
+
+    console.log('[checkout] success', {
+      traceId,
+      orderId: apexResponse?.orderId,
+      accountId: apexResponse?.accountId,
+      contactId: apexResponse?.contactId,
+      opportunityId: apexResponse?.opportunityId
+    })
+
+    return responseOk(res, {
+      ok: true,
+      message: apexResponse?.message || 'Checkout processed',
+      orderId: apexResponse?.orderId,
+      accountId: apexResponse?.accountId,
+      contactId: apexResponse?.contactId,
+      opportunityId: apexResponse?.opportunityId,
+      createdIds: apexResponse?.createdIds
+    })
   } catch (err) {
-    console.error('checkout error', err?.message || err)
-    return res.status(500).json({ ok: false, message: err?.message || String(err) })
+    console.warn('[checkout] unexpected error', {
+      traceId,
+      message: err?.message || String(err)
+    })
+    return responseError(res, 500, err?.message || 'Checkout failed', {
+      traceId,
+      reason: err?.message || String(err)
+    })
   }
 }
