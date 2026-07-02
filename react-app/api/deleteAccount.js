@@ -1,4 +1,4 @@
-import { getCookieObject, onlyMethods, clearCookie, COOKIE_KEYS } from './_lib/auth-utils.js'
+import { getCookieObject, onlyMethods, clearCookieObject, COOKIE_KEYS } from './_lib/auth-utils.js'
 import { ensureSalesforceSession, callSalesforceApi } from './_lib/salesforce.js'
 
 export default async function handler(req, res) {
@@ -26,8 +26,8 @@ export default async function handler(req, res) {
     console.log(`[deleteAccount] Webshop_User__c record deleted successfully: ${webshopUserId}`)
 
     // Clear session cookies
-    clearCookie(res, COOKIE_KEYS.SITE_SESSION)
-    clearCookie(res, COOKIE_KEYS.SF_SESSION_TOKEN)
+    clearCookieObject(res, COOKIE_KEYS.SITE_SESSION)
+    clearCookieObject(res, COOKIE_KEYS.SALESFORCE_SESSION)
     console.log(`[deleteAccount] Session cookies cleared for webshopUserId: ${webshopUserId}`)
 
     return res.status(200).json({ ok: true, message: 'Account deleted' })
