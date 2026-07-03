@@ -2,7 +2,7 @@
 
 ## Overview
 
-**React 4 fun** is a React SPA built with Vite and deployed on Vercel. It started as a Salesforce Web-to-Lead capture form and has grown into a full-stack authenticated webshop. Users can register, verify their email, log in, and access a gated shop page. All user data is stored in Salesforce custom objects. Session state is managed via AES-256-GCM encrypted HttpOnly cookies — no database or Redis required.
+**React 4 fun** is a React SPA built with Vite and deployed on Vercel. It started as a Salesforce Web-to-Lead capture form and has grown into a full-stack authenticated webshop. Users can register, verify their email, log in, browse products, place orders, view order history, manage account data, and read static info/help pages. All user data is stored in Salesforce custom objects. Session state is managed via AES-256-GCM encrypted HttpOnly cookies - no database or Redis required.
 
 ---
 
@@ -228,7 +228,7 @@ Custom Salesforce fields must use the `00N...` field ID (not the API name) in th
 
 All serverless API functions authenticate with Salesforce using the **OAuth2 Client Credentials** (machine-to-machine) flow against the `Custom_Webshop_External_Client_App` Connected App. No user is redirected to Salesforce — this flow runs entirely server-side.
 
-The access token is cached in an encrypted `wf_salesforce_session` HttpOnly cookie and reused across requests until it expires (with a 120-second refresh buffer). `ensureSalesforceSession(req, res)` is called at the top of every handler that needs Salesforce access.
+The access token is cached in an encrypted `SALESFORCE_SESSION` HttpOnly cookie and reused across requests until it expires (with a 120-second refresh buffer). `ensureSalesforceSession(req, res)` is called at the top of every handler that needs Salesforce access.
 
 **Salesforce environment:**
 - My Domain: `https://salesforfun-dev-ed.develop.my.salesforce.com`
@@ -241,7 +241,7 @@ The access token is cached in an encrypted `wf_salesforce_session` HttpOnly cook
 
 **`Webshop_User__c`** — one record per registered user
 - Fields: `Email__c`, `Username__c`, `First_Name__c`, `Last_Name__c`, `Company__c`, `Password_Hash__c` (SHA-256), `Status__c` (restricted picklist: `Pending_Verification`, `Active`), `Email_Verified__c`, `Email_Verified_At__c`, `Failed_Login_Count__c`, `Last_Login_At__c`
-- Optional lookup fields: `Lead__c`, `Contact__c`, `Account__c`, `Opportunity__c` — populated during registration from existing Lead/Contact data; support future Lead conversion
+- Optional lookup fields: `Lead__c`, `Contact__c`, `Account__c`, `Opportunity__c` - populated during registration and checkout to link converted CRM records
 
 **`Webshop_Session__c`** — one record per login session
 - Fields: `Session_Id__c`, `Issued_At__c`, `Expires_At__c`, `Last_Seen_At__c`, `Active__c`, `Revoked_At__c`
@@ -251,8 +251,8 @@ The access token is cached in an encrypted `wf_salesforce_session` HttpOnly cook
 | Endpoint | Method | Purpose |
 |---|---|---|
 | `/api/session` | GET | Read `SITE_SESSION` cookie; return `{ authenticated, user }` |
-| `/api/register` | POST | Validate fields → Salesforce duplicate check → query existing Lead and reset Email_Verified__c if already verified → create `Webshop_User__c` → send verification email → set `PENDING_REGISTRATION` cookie |
-| `/api/verify` | POST | Validate code from body against `PENDING_REGISTRATION` cookie → update `Webshop_User__c` to Active + set Email_Verified__c=true → set `SITE_SESSION` + `VERIFIED_USER` cookies |
+| `/api/register` | POST | Validate fields → Salesforce duplicate check → query existing Lead/Contact; reset lead verification only when lead is not converted → create `Webshop_User__c` → send verification email → set `PENDING_REGISTRATION` cookie |
+| `/api/verify` | POST | Validate code from body against `PENDING_REGISTRATION` cookie → update `Webshop_User__c` to Active + set Email_Verified__c=true → optionally sync Lead verification fields (skips converted leads) → set `SITE_SESSION` + `VERIFIED_USER` cookies |
 | `/api/login` | POST | Query `Webshop_User__c` → validate status + password hash → create `Webshop_Session__c` → set `SITE_SESSION` + `SALESFORCE_SESSION` cookies |
 | `/api/logout` | POST | Set `Webshop_Session__c.Active__c = false`, `Revoked_At__c` → clear all session cookies |
 | `/api/deleteAccount` | DELETE | Delete `Webshop_User__c` record → clear `SITE_SESSION`, `SALESFORCE_SESSION`, `VERIFIED_USER` cookies |
@@ -337,13 +337,14 @@ Live URL: `https://react-for-fun.vercel.app`
 | Feature | Status | Notes |
 |---|---|---|
 | Account deletion | ✅ | `/api/deleteAccount` endpoint clears all cookies and permanently removes user record |
-| Re-registration support | ✅ | Users can delete and re-register with same email; register.js resets Email_Verified__c on existing Lead |
+| Re-registration support | ✅ | Users can delete and re-register with same email; register.js now skips Lead patch on converted leads to avoid CANNOT_UPDATE_CONVERTED_LEAD |
 | Lead conversion at checkout | ✅ | Apex WebshopCheckout atomically converts Lead to Account/Contact/Opportunity on first checkout |
 | Repeat order support | ✅ | Apex checks if Lead already converted; reuses Account/Contact and creates new Opportunity for subsequent orders |
 | Order history page | ✅ | Orders page with expandable accordion UI, status badges, product details with correct names |
 | Static information pages | ✅ | About, Careers, Order Status, Shipping, FAQ, Contact, Accessibility pages fully implemented |
 | Footer navigation | ✅ | All footer links connect to static pages and authenticated account routes |
 | Session management in new registrations | ✅ | verify.js now includes webshopUserId in SITE_SESSION, enabling immediate account access |
+| Converted lead safety in verify | ✅ | verify.js checks Lead.IsConverted and skips Lead update to prevent warning noise |
 
 ## Pending / Not Yet Implemented
 
