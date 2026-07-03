@@ -114,12 +114,18 @@ export default async function handler(req, res) {
 
             // If lead was previously verified (e.g., from a deleted account re-registering),
             // reset verification status for a fresh verification email.
-            if (lead.Email_Verified__c === true) {
+            // Converted leads cannot be patched in Salesforce, so skip reset for those.
+            if (lead.Email_Verified__c === true && lead.IsConverted !== true) {
                 await updateSalesforceRecord(sf, 'Lead', leadId, {
                     Email_Verified__c: false,
                     Email_Verified_At__c: null
                 })
                 console.log('[register] lead verification reset', {
+                    traceId,
+                    leadId
+                })
+            } else if (lead.Email_Verified__c === true && lead.IsConverted === true) {
+                console.log('[register] lead verification reset skipped for converted lead', {
                     traceId,
                     leadId
                 })
