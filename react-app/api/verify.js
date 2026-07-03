@@ -76,11 +76,23 @@ export default async function handler(req, res) {
     // Keep optional Lead reporting fields in sync when a linked lead exists.
     if (pending.leadId) {
         try {
-            await updateSalesforceRecord(sf, 'Lead', pending.leadId, {
-                Email_Verified__c: true,
-                Email_Verified_At__c: new Date().toISOString(),
-                Verification_Channel__c: 'Email'
-            })
+            const matchedLeads = await querySalesforce(
+                sf,
+                `SELECT Id, IsConverted FROM Lead WHERE Id = '${escapeSoql(pending.leadId)}' LIMIT 1`
+            )
+
+            const lead = matchedLeads[0]
+            if (lead?.IsConverted === true) {
+                console.log('[verify] lead sync skipped for converted lead', {
+                    leadId: pending.leadId
+                })
+            } else {
+                await updateSalesforceRecord(sf, 'Lead', pending.leadId, {
+                    Email_Verified__c: true,
+                    Email_Verified_At__c: new Date().toISOString(),
+                    Verification_Channel__c: 'Email'
+                })
+            }
         } catch (error) {
             console.warn('[verify] lead sync failed', {
                 leadId: pending.leadId,
