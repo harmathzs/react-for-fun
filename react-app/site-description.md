@@ -9,7 +9,7 @@ The app uses Salesforce as the system of record and stores session state in encr
 ## Current Capabilities
 
 1. Lead capture via Web-to-Lead on the landing page.
-2. Registration with email verification.
+2. Registration with Apex-backed email verification.
 3. Login/logout and protected routes.
 4. Account deletion and re-registration with the same email.
 5. Checkout via Apex REST endpoint at /services/apexrest/webshop/checkout.
@@ -32,7 +32,7 @@ The app uses Salesforce as the system of record and stores session state in encr
 
 ## Key API Endpoints
 
-- /api/register: creates pending user flow and sends verification code.
+- /api/register: creates pending user flow and sends verification email through Apex.
 - /api/verify: activates Webshop_User__c and creates SITE_SESSION cookie.
 - /api/login and /api/logout: session lifecycle.
 - /api/deleteAccount: deletes Webshop_User__c and clears cookies.

@@ -153,7 +153,7 @@ Confirmation page shown after the Web-to-Lead form is submitted. Salesforce redi
 
 Two-step registration form. Redirects to `/shop` if already authenticated.
 
-**Step 1 — Registration:** collects email, password (≥8 chars), first name, last name, company. On success the API returns a `serverCode` (non-production only — displayed in the UI for testing since email sending is not yet implemented).
+**Step 1 — Registration:** collects email, password (≥8 chars), first name, last name, company. On success the API sends a verification email through Salesforce Apex and returns a `serverCode` only in non-production for local testing.
 
 **Step 2 — Verification:** user enters the 6-digit code. On success calls `onAuthChange()` (re-fetches session) and navigates to `/shop`.
 
@@ -336,6 +336,7 @@ Live URL: `https://react-for-fun.vercel.app`
 
 | Feature | Status | Notes |
 |---|---|---|
+| Email sending for verification | ✅ | `/api/register` now sends verification emails through Apex REST `/services/apexrest/webshop/verification-email`; non-production still returns the code in the response body for local testing. |
 | Account deletion | ✅ | `/api/deleteAccount` endpoint clears all cookies and permanently removes user record |
 | Re-registration support | ✅ | Users can delete and re-register with same email; register.js now skips Lead patch on converted leads to avoid CANNOT_UPDATE_CONVERTED_LEAD |
 | Lead conversion at checkout | ✅ | Apex WebshopCheckout atomically converts Lead to Account/Contact/Opportunity on first checkout |
@@ -350,7 +351,6 @@ Live URL: `https://react-for-fun.vercel.app`
 
 | Feature | Notes |
 |---|---|
-| Email sending for verification | Code is returned in API response body in non-production only. Plan: Salesforce Apex email or external provider (Resend/SendGrid). When implemented, store hashed code + expiry on `Webshop_User__c` and validate against Salesforce instead of cookie. |
 | `Webshop_Session__c` cleanup | No Scheduled Flow/Apex job yet to expire old session records |
 | ShopPage product display | Route and auth guard exist; product content not fully implemented |
 | Inventory management | No inventory tracking on products yet |
