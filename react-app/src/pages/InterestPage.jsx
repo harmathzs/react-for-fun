@@ -4,9 +4,14 @@ import LoadingButton from '../components/LoadingButton'
 export default function InterestPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  function handleSubmit(e) {
+  function handleSubmit() {
     setIsSubmitting(true)
-    // allow normal form submission to proceed; the browser will navigate away
+
+    // If navigation is blocked (for example by a browser extension),
+    // avoid leaving the button in a perpetual loading state.
+    window.setTimeout(() => {
+      setIsSubmitting(false)
+    }, 8000)
   }
 
   return (
@@ -17,6 +22,7 @@ export default function InterestPage() {
         className="w2l-form"
         action="https://webto.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8&orgId=00DdM00000vOexx"
         method="POST"
+        onSubmit={handleSubmit}
       >
         <input type="hidden" name="oid" value="00DdM00000vOexx" />
         <input type="hidden" name="lead_source" value="Web" />
@@ -115,7 +121,7 @@ export default function InterestPage() {
           </div>
         </div>
 
-        <LoadingButton type="submit" className="btn-primary w2l-submit" isLoading={isSubmitting} onClick={handleSubmit}>
+        <LoadingButton type="submit" className="btn-primary w2l-submit" isLoading={isSubmitting}>
           Submit Request
         </LoadingButton>
         <p className="form-note">Required: First Name, Last Name, Company, and Email. <br />After submit, Salesforce redirects to the thank-you page.</p>
